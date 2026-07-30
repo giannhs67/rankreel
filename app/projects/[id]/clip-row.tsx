@@ -12,7 +12,7 @@ export function ClipRow({
   isLast,
 }: {
   projectId: string;
-  clip: Pick<Clip, "id" | "title" | "number" | "storage_path">;
+  clip: Pick<Clip, "id" | "title" | "number" | "storage_path" | "trim_start" | "trim_end">;
   isFirst: boolean;
   isLast: boolean;
 }) {
@@ -62,6 +62,24 @@ export function ClipRow({
             defaultValue={clip.number ?? ""}
             className="w-20 rounded-md border border-black/15 bg-transparent px-3 py-1.5 text-sm dark:border-white/15"
           />
+          <input
+            name="trim_start"
+            type="number"
+            step="0.1"
+            min="0"
+            placeholder="Trim start (s)"
+            defaultValue={clip.trim_start ?? ""}
+            className="w-28 rounded-md border border-black/15 bg-transparent px-3 py-1.5 text-sm dark:border-white/15"
+          />
+          <input
+            name="trim_end"
+            type="number"
+            step="0.1"
+            min="0"
+            placeholder="Trim end (s)"
+            defaultValue={clip.trim_end ?? ""}
+            className="w-28 rounded-md border border-black/15 bg-transparent px-3 py-1.5 text-sm dark:border-white/15"
+          />
           <div className="flex gap-2">
             <button
               type="submit"
@@ -93,6 +111,12 @@ export function ClipRow({
           {clip.number != null && <span className="text-black/40 dark:text-white/40">#{clip.number} </span>}
           {clip.title || <span className="italic text-black/40 dark:text-white/40">Untitled</span>}
         </p>
+        {clip.trim_start != null && clip.trim_end != null && (
+          <p className="text-xs text-black/40 dark:text-white/40">
+            {(clip.trim_end - clip.trim_start).toFixed(1)}s ({clip.trim_start.toFixed(1)}s –{" "}
+            {clip.trim_end.toFixed(1)}s)
+          </p>
+        )}
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <button

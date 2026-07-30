@@ -1,5 +1,7 @@
-import { AbsoluteFill, Series, Video, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Series, Video, useCurrentFrame, useVideoConfig } from "remotion";
 import { DEFAULT_RANKING_CONFIG, type RankingListConfig } from "./ranking-config";
+import { clipFramesFor, getClipStartFrames, getCurrentClipIndex, getTotalDurationInFrames } from "./clip-timing";
+import { entranceStyle } from "./entrance-style";
 
 export type RankingClip = {
   id: string;
@@ -20,64 +22,14 @@ const WIDTH = 1080;
 const HEIGHT = 1920;
 const TOP_HEIGHT = 900;
 
-function clipFrames(clip: RankingClip, fps: number) {
-  return Math.max(1, Math.round(clip.durationInSeconds * fps));
-}
-
 /** Used both by remotion/Root.tsx's <Composition calculateMetadata> and the in-app Player. */
 export function getRankingListMetadata(props: RankingListProps) {
-  const durationInFrames = Math.max(
-    FPS,
-    props.clips.reduce((sum, clip) => sum + clipFrames(clip, FPS), 0),
-  );
-  return { fps: FPS, width: WIDTH, height: HEIGHT, durationInFrames };
-}
-
-function entranceStyle(
-  animation: RankingListConfig["animation"],
-  framesSinceReveal: number,
-  fps: number,
-): React.CSSProperties {
-  if (framesSinceReveal < 0) return { opacity: 0 };
-
-  const { type, durationInFrames } = animation;
-
-  if (type === "none") {
-    return { opacity: 1 };
-  }
-
-  if (type === "fade") {
-    const opacity = interpolate(framesSinceReveal, [0, durationInFrames], [0, 1], {
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-    });
-    return { opacity };
-  }
-
-  if (type === "slide") {
-    const opacity = interpolate(framesSinceReveal, [0, durationInFrames], [0, 1], {
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-    });
-    const translateY = interpolate(framesSinceReveal, [0, durationInFrames], [40, 0], {
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-    });
-    return { opacity, transform: `translateY(${translateY}px)` };
-  }
-
-  // pop
-  const scale = spring({
-    frame: framesSinceReveal,
-    fps,
-    config: { damping: 10, stiffness: 180 },
-    durationInFrames,
-  });
-  const opacity = interpolate(framesSinceReveal, [0, Math.min(durationInFrames, 8)], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  return { opacity, transform: `scale(${scale})` };
+  return {
+    fps: FPS,
+    width: WIDTH,
+    height: HEIGHT,
+    durationInFrames: getTotalDurationInFrames(props.clips, FPS),
+  };
 }
 
 export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG }: RankingListProps) {
@@ -85,17 +37,8 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG }: RankingL
   const { fps } = useVideoConfig();
 
   // clips are ordered #N (highest/first-added) -> #1 (lowest/last-added), matching playback order.
-  const startFrames: number[] = [];
-  let cursor = 0;
-  for (let i = 0; i < clips.length; i++) {
-    startFrames.push(cursor);
-    cursor += clipFrames(clips[i], fps);
-  }
-  let currentIndex = 0;
-  for (let i = 0; i < clips.length; i++) {
-    if (frame >= startFrames[i]) currentIndex = i;
-  }
-
+  const startFrames = getClipStartFrames(clips, fps);
+  const currentIndex = getCurrentClipIndex(startFrames, frame);
   const current = clips[currentIndex];
 
   return (
@@ -168,7 +111,7 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG }: RankingL
       <AbsoluteFill style={{ top: TOP_HEIGHT, backgroundColor: "black" }}>
         <Series>
           {clips.map((clip) => (
-            <Series.Sequence key={clip.id} durationInFrames={clipFrames(clip, fps)}>
+            <Series.Sequence key={clip.id} durationInFrames={clipFramesFor(clip.durationInSeconds, fps)}>
               <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
                 <Video src={clip.videoUrl} style={{ maxWidth: "100%", maxHeight: "100%" }} />
               </AbsoluteFill>

@@ -1,0 +1,133 @@
+import path from "node:path";
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { getRankingRenderProps } from "@/lib/ranking-render-data";
+import { getTitleBannerRenderProps } from "@/lib/title-banner-render-data";
+import { getCaptionRenderProps } from "@/lib/caption-render-data";
+import { RENDERS_DIR, renderCompositionLocally } from "@/worker/render";
+import type { CompositionFormat } from "@/shared/types";
+
+const COMPOSITION_ID: Record<CompositionFormat, "RankingList" | "TitleBanner" | "Caption"> = {
+  ranking_list: "RankingList",
+  title_banner: "TitleBanner",
+  caption: "Caption",
+};
+
+async function getRenderPropsForFormat(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  format: CompositionFormat,
+  projectId: string,
+) {
+  if (format === "title_banner") return getTitleBannerRenderProps(supabase, projectId);
+  if (format === "caption") return getCaptionRenderProps(supabase, projectId);
+  return getRankingRenderProps(supabase, projectId);
+}
+
+export async function POST(request: Request) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await request.json().catch(() => null);
+  const projectId = body?.projectId as string | undefined;
+  if (!projectId) {
+    return NextResponse.json({ error: "projectId is required" }, { status: 400 });
+  }
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id, format")
+    .eq("id", projectId)
+    .single();
+
+  if (!project) {
+    return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  }
+
+  const format = project.format as CompositionFormat;
+  const renderProps = await getRenderPropsForFormat(supabase, format, projectId);
+  if (!renderProps) {
+    return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  }
+  if (renderProps.clips.length === 0) {
+    return NextResponse.json({ error: "Add at least one clip before rendering" }, { status: 400 });
+  }
+
+  const { data: job, error: insertError } = await supabase
+    .from("jobs")
+    .insert({ project_id: projectId, owner_id: user.id, status: "queued", progress: 0 })
+    .select("id")
+    .single();
+
+  if (insertError || !job) {
+    return NextResponse.json(
+      { error: insertError?.message ?? "Failed to create job" },
+      { status: 500 },
+    );
+  }
+
+  // Deliberately not awaited: this Next.js server is a persistent local Node process (not a
+  // Vercel serverless function, which is why heavy rendering is safe to run in-process here at
+  // all — see ClaudePrompt.md's "never run heavy renders on Vercel functions" guardrail). The
+  // response returns immediately; the client polls `jobs` for progress (see memory/DECISIONS.md
+  // for why polling instead of Supabase Realtime).
+  runRender(format, projectId, job.id, renderProps).catch((err) => {
+    console.error(`[render] job ${job.id} failed:`, err);
+  });
+
+  return NextResponse.json({ jobId: job.id });
+}
+
+async function runRender(
+  format: CompositionFormat,
+  projectId: string,
+  jobId: string,
+  renderProps: { projectName: string; clips: unknown[]; config: unknown },
+) {
+  const supabase = await createClient();
+
+  let lastWrittenProgress = 0;
+
+  try {
+    await supabase.from("jobs").update({ status: "rendering", progress: 0 }).eq("id", jobId);
+
+    const inputProps = {
+      projectName: renderProps.projectName,
+      clips: renderProps.clips,
+      config: renderProps.config,
+    };
+
+    const outputLocation = await renderCompositionLocally({
+      compositionId: COMPOSITION_ID[format],
+      projectId,
+      jobId,
+      inputProps,
+      onProgress: (progress) => {
+        if (progress - lastWrittenProgress < 0.05 && progress < 1) return;
+        lastWrittenProgress = progress;
+        supabase
+          .from("jobs")
+          .update({ progress, status: "rendering" })
+          .eq("id", jobId)
+          .then(() => {});
+      },
+    });
+
+    const relativeOutputPath = path.relative(RENDERS_DIR, outputLocation);
+
+    await supabase
+      .from("jobs")
+      .update({ status: "done", progress: 1, output_path: relativeOutputPath })
+      .eq("id", jobId);
+  } catch (err) {
+    await supabase
+      .from("jobs")
+      .update({
+        status: "error",
+        error: err instanceof Error ? err.message : "Render failed",
+      })
+      .eq("id", jobId);
+  }
+}

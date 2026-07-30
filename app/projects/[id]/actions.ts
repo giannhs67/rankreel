@@ -18,6 +18,8 @@ export async function addClip(input: {
   storagePath: string;
   title: string;
   number: number | null;
+  /** Real duration read from the video file in the browser, if it could be determined. */
+  durationInSeconds: number | null;
 }) {
   const { supabase, user } = await requireUser();
 
@@ -33,6 +35,8 @@ export async function addClip(input: {
     title: input.title,
     number: input.number,
     order_index: count ?? 0,
+    trim_start: input.durationInSeconds != null ? 0 : null,
+    trim_end: input.durationInSeconds,
   });
 
   if (error) throw new Error(error.message);
@@ -49,10 +53,14 @@ export async function updateClip(
   const title = String(formData.get("title") ?? "").trim();
   const numberRaw = String(formData.get("number") ?? "").trim();
   const number = numberRaw === "" ? null : Number(numberRaw);
+  const trimStartRaw = String(formData.get("trim_start") ?? "").trim();
+  const trimEndRaw = String(formData.get("trim_end") ?? "").trim();
+  const trim_start = trimStartRaw === "" ? null : Number(trimStartRaw);
+  const trim_end = trimEndRaw === "" ? null : Number(trimEndRaw);
 
   const { error } = await supabase
     .from("clips")
-    .update({ title, number })
+    .update({ title, number, trim_start, trim_end })
     .eq("id", clipId);
 
   if (error) throw new Error(error.message);

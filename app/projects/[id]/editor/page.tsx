@@ -3,7 +3,11 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/app-header";
 import { resolveRankingConfig } from "@/remotion/ranking-config";
+import { resolveTitleBannerConfig } from "@/remotion/title-banner-config";
+import { resolveCaptionConfig } from "@/remotion/caption-config";
+import type { CompositionFormat } from "@/shared/types";
 import { TemplateEditor } from "./template-editor";
+import { SimpleStyleEditor } from "./simple-style-editor";
 
 const CUSTOM_FONT_URL_TTL_SECONDS = 60 * 60;
 
@@ -22,11 +26,13 @@ export default async function ProjectEditorPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("id, name, template_id")
+    .select("id, name, template_id, format")
     .eq("id", id)
     .single();
 
   if (!project) notFound();
+
+  const format = project.format as CompositionFormat;
 
   let template: { id: string; config_json: Record<string, unknown> } | null = null;
 
@@ -45,7 +51,7 @@ export default async function ProjectEditorPage({
       .insert({
         owner_id: user.id,
         name: `${project.name} style`,
-        format: "ranking_list",
+        format,
         config_json: {},
       })
       .select("id, config_json")
@@ -59,23 +65,69 @@ export default async function ProjectEditorPage({
     template = created;
   }
 
-  const config = resolveRankingConfig(template.config_json);
-
   let customFontUrl: string | null = null;
-  if (config.font.source === "custom" && config.font.customFontPath) {
+
+  async function signCustomFont(path: string | null) {
+    if (!path) return null;
     const { data: signed } = await supabase.storage
       .from("fonts")
-      .createSignedUrl(config.font.customFontPath, CUSTOM_FONT_URL_TTL_SECONDS);
-    customFontUrl = signed?.signedUrl ?? null;
+      .createSignedUrl(path, CUSTOM_FONT_URL_TTL_SECONDS);
+    return signed?.signedUrl ?? null;
   }
 
-  // Saved, reusable templates (excludes this project's own live/private template row).
-  const { data: savedTemplates } = await supabase
-    .from("templates")
-    .select("id, name")
-    .eq("format", "ranking_list")
-    .neq("id", template.id)
-    .order("created_at", { ascending: false });
+  let editor: React.ReactNode;
+
+  if (format === "ranking_list") {
+    const config = resolveRankingConfig(template.config_json);
+    if (config.font.source === "custom") {
+      customFontUrl = await signCustomFont(config.font.customFontPath);
+    }
+
+    const { data: savedTemplates } = await supabase
+      .from("templates")
+      .select("id, name")
+      .eq("format", "ranking_list")
+      .neq("id", template.id)
+      .order("created_at", { ascending: false });
+
+    editor = (
+      <TemplateEditor
+        projectId={project.id}
+        templateId={template.id}
+        initialConfig={config}
+        initialCustomFontUrl={customFontUrl}
+        savedTemplates={savedTemplates ?? []}
+      />
+    );
+  } else if (format === "title_banner") {
+    const config = resolveTitleBannerConfig(template.config_json);
+    if (config.font.source === "custom") {
+      customFontUrl = await signCustomFont(config.font.customFontPath);
+    }
+    editor = (
+      <SimpleStyleEditor
+        format="title_banner"
+        projectId={project.id}
+        templateId={template.id}
+        initialConfig={config}
+        initialCustomFontUrl={customFontUrl}
+      />
+    );
+  } else {
+    const config = resolveCaptionConfig(template.config_json);
+    if (config.font.source === "custom") {
+      customFontUrl = await signCustomFont(config.font.customFontPath);
+    }
+    editor = (
+      <SimpleStyleEditor
+        format="caption"
+        projectId={project.id}
+        templateId={template.id}
+        initialConfig={config}
+        initialCustomFontUrl={customFontUrl}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -99,13 +151,7 @@ export default async function ProjectEditorPage({
           </Link>
         </div>
 
-        <TemplateEditor
-          projectId={project.id}
-          templateId={template.id}
-          initialConfig={config}
-          initialCustomFontUrl={customFontUrl}
-          savedTemplates={savedTemplates ?? []}
-        />
+        {editor}
       </main>
     </div>
   );

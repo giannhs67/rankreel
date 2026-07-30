@@ -12,7 +12,9 @@
     "remotion:studio": "remotion studio remotion/index.ts"
   },
   "dependencies": {
+    "@remotion/bundler": "^4.0.502",
     "@remotion/player": "^4.0.502",
+    "@remotion/renderer": "^4.0.502",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.111.0",
     "konva": "^10.3.0",

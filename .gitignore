@@ -17,6 +17,7 @@ dist/
 
 # Remotion render output
 /remotion/out/
+/renders/
 *.mp4
 *.mov
 *.webm

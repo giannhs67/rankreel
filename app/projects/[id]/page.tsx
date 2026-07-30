@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/app-header";
 import { ClipUploadForm } from "./clip-upload-form";
 import { ClipRow } from "./clip-row";
+import { RenderPanel } from "./render-panel";
 
 export default async function ProjectPage({
   params,
@@ -28,9 +29,15 @@ export default async function ProjectPage({
 
   const { data: clips } = await supabase
     .from("clips")
-    .select("id, title, number, storage_path")
+    .select("id, title, number, storage_path, trim_start, trim_end")
     .eq("project_id", id)
     .order("order_index", { ascending: true });
+
+  const { data: jobs } = await supabase
+    .from("jobs")
+    .select("id, status, progress, output_path, error, created_at")
+    .eq("project_id", id)
+    .order("created_at", { ascending: false });
 
   return (
     <div className="min-h-screen">
@@ -89,6 +96,15 @@ export default async function ProjectPage({
             ))}
           </ul>
         </section>
+
+        {!!clips?.length && (
+          <section>
+            <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
+              Render
+            </h2>
+            <RenderPanel projectId={project.id} initialJobs={jobs ?? []} />
+          </section>
+        )}
       </main>
     </div>
   );

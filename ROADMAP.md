@@ -49,17 +49,53 @@ detailed status and `memory/DECISIONS.md` for why non-obvious calls were made.
       animation, uploaded a real custom `.ttf`, saved, then confirmed via a direct Postgres query
       that `config_json` persisted the exact dragged position and every style field, and confirmed
       in the preview DOM that the row actually renders with the custom font-family applied.
-- [ ] Per-clip trimming (`trim_start`/`trim_end`) — still not wired to any UI; preview duration stays
-      a 4s placeholder. Explicitly deferred (not part of this pass — see DECISIONS.md).
+- [x] Per-clip trimming: real duration is now captured client-side on upload (hidden `<video>`
+      element reads `.duration`), stored as `trim_start=0`/`trim_end=duration`; editable afterward
+      via numeric inputs on the clip row. 4s is now only a fallback for pre-existing clips.
 - [ ] Text styling is one shared block for the whole ranking list (not independently
       positionable/colorable per row or per word/phrase) — a deliberate scope cut, see DECISIONS.md.
 
-**M5 — Render one MP4 (Remotion Lambda)**
-- [ ] `deploy-lambda`; app enqueues job → Lambda renders → MP4 to `renders` bucket; jobs row updated.
-- [ ] Live progress via Supabase Realtime on `jobs`.
-- Skipped for now — needs an AWS account (owner doesn't have one currently). Revisit once available;
-  the self-hosted-worker alternative from ClaudePrompt.md §2 is the fallback if AWS stays off the
-  table. Jumped ahead to M6 in the meantime since it only needed what M0–M4 already built.
+**M5 — Render one MP4 (local, not Lambda)**
+- [x] Owner has no AWS account, so this targets **local disk rendering** instead of Remotion Lambda —
+      a variant of ClaudePrompt.md §2's self-hosted-worker fallback, simplified to run in-process
+      since Vercel isn't in the picture yet either. `worker/render.ts` uses `@remotion/renderer` +
+      `@remotion/bundler` to render any of the three compositions to a real MP4 on local disk
+      (`renders/<projectId>/<jobId>.mp4`, gitignored).
+- [x] `POST /api/render` creates a `jobs` row and renders asynchronously (fire-and-forget from the
+      Route Handler — safe because this is a persistent local Node process, not a Vercel function);
+      `GET /api/renders/[jobId]` streams the finished file back with proper auth + ownership checks.
+- [x] Render progress/status shown in the UI via **polling** (2s interval), not Supabase Realtime —
+      self-hosted local Realtime didn't reliably deliver `postgres_changes` events in this
+      environment (verified broken even with the service-role key, no RLS involved). See
+      DECISIONS.md.
+- [x] Verified thoroughly: rendered a real ~22s clip end-to-end, confirmed via `ffprobe` that the
+      output is a genuine playable H.264/AAC MP4 at 1080×1920/30fps matching the source clip's
+      length, and visually confirmed via an extracted frame that the composition (blurred backdrop,
+      ranking text, letterboxed clip, original audio) rendered correctly — not a blank/broken file.
+      Also verified through the actual browser UI: click render → job appears → progress advances →
+      download link works → downloaded file is valid.
+- [ ] Real cloud rendering (Lambda or a separate hosted worker) is still open for whenever there's a
+      deployment target and/or an AWS account — see the open question in STATE.md.
+
+**M8 — Title-banner + Caption formats**
+- [x] Projects now declare a `format` (`ranking_list` / `title_banner` / `caption`) at creation time
+      (migration `0002_project_format.sql`); the editor, preview, and render routes all branch on it.
+- [x] `remotion/TitleBanner.tsx`: full-bleed sequential clips with a single positioned banner line
+      (the current clip's title), same font/color/stroke/animation system as Ranking List.
+- [x] `remotion/Caption.tsx`: full-bleed sequential clips with a pill-style caption (background +
+      text color) showing the current clip's title. **Not** true word-by-word sync — that needs
+      per-word timestamps (ASR or a manual timing editor), neither of which exists yet. Real and
+      renders actual captions, just at per-clip granularity. See DECISIONS.md.
+- [x] `remotion/clip-timing.ts` and `remotion/entrance-style.ts` extracted as shared logic (clip
+      sequencing math, entrance animations) so Ranking List, Title Banner, and Caption can't drift
+      apart on identical behavior — Ranking List refactored to use them too (regression-tested).
+- [x] Both new formats get a simpler editor (`simple-style-editor.tsx`: numeric X/Y instead of a
+      Konva drag canvas, same font-upload/Google-Fonts pattern) — a deliberate scope cut vs. Ranking
+      List's fuller M4 editor. No save/apply template library for these two formats yet either.
+- [x] Verified end-to-end with Playwright for both new formats (create → upload → style → save →
+      preview shows real `<video>` + the styled text during actual playback) *and* a full
+      ranking_list regression pass afterward to confirm the shared-code refactor didn't break the
+      original, already-verified format.
 
 **M6 — Templates**
 - [x] Save current look as a named, reusable template (`saveAsTemplate` — snapshots the editor's

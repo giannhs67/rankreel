@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { resolveRankingConfig, type RankingListConfig } from "@/remotion/ranking-config";
+import type { TitleBannerConfig } from "@/remotion/title-banner-config";
+import type { CaptionConfig } from "@/remotion/caption-config";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -14,10 +16,13 @@ async function requireUser() {
   return { supabase, user };
 }
 
+// Any format's config — templates.config_json is just jsonb, so one action serves all formats.
+type AnyTemplateConfig = RankingListConfig | TitleBannerConfig | CaptionConfig;
+
 export async function updateTemplateConfig(
   projectId: string,
   templateId: string,
-  config: RankingListConfig,
+  config: AnyTemplateConfig,
 ) {
   const { supabase } = await requireUser();
 

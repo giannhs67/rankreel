@@ -1,8 +1,11 @@
+export type CompositionFormat = "ranking_list" | "title_banner" | "caption";
+
 export type Project = {
   id: string;
   owner_id: string;
   name: string;
   template_id: string | null;
+  format: CompositionFormat;
   created_at: string;
   updated_at: string;
 };
@@ -24,7 +27,7 @@ export type Template = {
   id: string;
   owner_id: string;
   name: string;
-  format: "ranking_list" | "title_banner" | "caption";
+  format: CompositionFormat;
   config_json: Record<string, unknown>;
   created_at: string;
 };

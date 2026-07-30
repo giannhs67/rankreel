@@ -2,15 +2,19 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/app-header";
-import type { RankingClip } from "@/remotion/RankingList";
-import { resolveRankingConfig } from "@/remotion/ranking-config";
+import { getRankingRenderProps } from "@/lib/ranking-render-data";
+import { getTitleBannerRenderProps } from "@/lib/title-banner-render-data";
+import { getCaptionRenderProps } from "@/lib/caption-render-data";
+import type { CompositionFormat } from "@/shared/types";
 import { RankingPreviewPlayer } from "./ranking-preview-player";
+import { TitleBannerPreviewPlayer } from "./title-banner-preview-player";
+import { CaptionPreviewPlayer } from "./caption-preview-player";
 
-// Clips have no probed duration yet (real trimming is still a TODO) — this is a placeholder
-// length per clip for the preview, used only when trim_start/trim_end aren't set.
-const DEFAULT_CLIP_SECONDS = 4;
-const SIGNED_URL_TTL_SECONDS = 60 * 30;
-const CUSTOM_FONT_URL_TTL_SECONDS = 60 * 60;
+const TITLES: Record<CompositionFormat, string> = {
+  ranking_list: "Ranking List preview",
+  title_banner: "Title Banner preview",
+  caption: "Caption preview",
+};
 
 export default async function ProjectPreviewPage({
   params,
@@ -27,55 +31,35 @@ export default async function ProjectPreviewPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("id, name, template_id")
+    .select("format")
     .eq("id", id)
     .single();
-
   if (!project) notFound();
 
-  let templateConfig = resolveRankingConfig(null);
-  if (project.template_id) {
-    const { data: template } = await supabase
-      .from("templates")
-      .select("config_json")
-      .eq("id", project.template_id)
-      .single();
-    if (template) templateConfig = resolveRankingConfig(template.config_json);
-  }
+  const format = project.format as CompositionFormat;
 
-  let customFontUrl: string | null = null;
-  if (templateConfig.font.source === "custom" && templateConfig.font.customFontPath) {
-    const { data: signed } = await supabase.storage
-      .from("fonts")
-      .createSignedUrl(templateConfig.font.customFontPath, CUSTOM_FONT_URL_TTL_SECONDS);
-    customFontUrl = signed?.signedUrl ?? null;
-  }
+  let projectName = "";
+  let clipCount = 0;
+  let player: React.ReactNode = null;
 
-  const { data: clips } = await supabase
-    .from("clips")
-    .select("id, title, number, storage_path, trim_start, trim_end")
-    .eq("project_id", id)
-    .order("order_index", { ascending: true });
-
-  const rankingClips: RankingClip[] = [];
-  for (const clip of clips ?? []) {
-    const { data: signed } = await supabase.storage
-      .from("clips")
-      .createSignedUrl(clip.storage_path, SIGNED_URL_TTL_SECONDS);
-    if (!signed) continue;
-
-    const durationInSeconds =
-      clip.trim_start != null && clip.trim_end != null && clip.trim_end > clip.trim_start
-        ? clip.trim_end - clip.trim_start
-        : DEFAULT_CLIP_SECONDS;
-
-    rankingClips.push({
-      id: clip.id,
-      title: clip.title,
-      number: clip.number,
-      videoUrl: signed.signedUrl,
-      durationInSeconds,
-    });
+  if (format === "title_banner") {
+    const renderProps = await getTitleBannerRenderProps(supabase, id);
+    if (!renderProps) notFound();
+    projectName = renderProps.projectName;
+    clipCount = renderProps.clips.length;
+    if (clipCount > 0) player = <TitleBannerPreviewPlayer {...renderProps} />;
+  } else if (format === "caption") {
+    const renderProps = await getCaptionRenderProps(supabase, id);
+    if (!renderProps) notFound();
+    projectName = renderProps.projectName;
+    clipCount = renderProps.clips.length;
+    if (clipCount > 0) player = <CaptionPreviewPlayer {...renderProps} />;
+  } else {
+    const renderProps = await getRankingRenderProps(supabase, id);
+    if (!renderProps) notFound();
+    projectName = renderProps.projectName;
+    clipCount = renderProps.clips.length;
+    if (clipCount > 0) player = <RankingPreviewPlayer {...renderProps} />;
   }
 
   return (
@@ -84,25 +68,20 @@ export default async function ProjectPreviewPage({
       <main className="mx-auto max-w-2xl space-y-6 p-6">
         <div>
           <Link
-            href={`/projects/${project.id}`}
+            href={`/projects/${id}`}
             className="text-sm text-black/50 hover:underline dark:text-white/50"
           >
-            ← {project.name}
+            ← {projectName}
           </Link>
-          <h1 className="mt-1 text-xl font-semibold">Ranking List preview</h1>
+          <h1 className="mt-1 text-xl font-semibold">{TITLES[format]}</h1>
         </div>
 
-        {rankingClips.length === 0 ? (
+        {clipCount === 0 ? (
           <p className="text-sm text-black/50 dark:text-white/50">
             Add at least one clip before previewing.
           </p>
         ) : (
-          <RankingPreviewPlayer
-            projectName={project.name}
-            clips={rankingClips}
-            config={templateConfig}
-            customFontUrl={customFontUrl}
-          />
+          player
         )}
       </main>
     </div>

@@ -5,6 +5,24 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { addClip } from "./actions";
 
+/** Reads a video file's real duration in the browser without uploading it first. */
+function readVideoDuration(file: File): Promise<number | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(url);
+      resolve(Number.isFinite(video.duration) ? video.duration : null);
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    video.src = url;
+  });
+}
+
 export function ClipUploadForm({ projectId }: { projectId: string }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -25,6 +43,8 @@ export function ClipUploadForm({ projectId }: { projectId: string }) {
     setError(null);
 
     try {
+      const durationInSeconds = await readVideoDuration(file);
+
       const supabase = createClient();
       const ext = file.name.split(".").pop() || "mp4";
       const storagePath = `${projectId}/${crypto.randomUUID()}.${ext}`;
@@ -43,6 +63,7 @@ export function ClipUploadForm({ projectId }: { projectId: string }) {
         storagePath,
         title,
         number: numberRaw === "" ? null : Number(numberRaw),
+        durationInSeconds,
       });
 
       formRef.current?.reset();

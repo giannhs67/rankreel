@@ -113,3 +113,50 @@ One line per non-obvious choice, with the reason. Newest at the bottom.
   templates saved via "Save as template." Acceptable for a single-owner tool (it's all the same
   person's data either way) and avoids a schema change; revisit only if the list of "other projects'
   incidental style rows" starts cluttering the picker in practice.
+- **2026-07-31** — M5 renders **locally to disk**, not via Remotion Lambda/AWS. Owner explicitly has
+  no AWS account right now. `worker/render.ts` uses `@remotion/renderer` in-process; output MP4s go
+  to `renders/<projectId>/<jobId>.mp4` (gitignored), not Supabase Storage's `renders` bucket (that
+  bucket stays provisioned/unused for now — a real cloud path could target it later). This only works
+  because rendering happens in a persistent local Node process; it would need a real separate worker
+  if this app ever runs on Vercel, per ClaudePrompt.md's "never render on Vercel functions" guardrail.
+- **2026-07-31** — `/api/render` fires off the render **without awaiting** it in the Route Handler,
+  responding immediately with the job id. This relies on the Next.js dev/self-hosted server being a
+  long-lived Node process — the async work keeps running after the HTTP response completes, which is
+  NOT true on Vercel serverless (functions freeze post-response). Fine for local-only right now;
+  flagged as something that needs a real background worker before ever deploying to Vercel.
+- **2026-07-31** — Switched render-progress UI from a Supabase Realtime (`postgres_changes`)
+  subscription to 2-second polling. Root cause: this local self-hosted Supabase's Realtime service
+  did not deliver `postgres_changes` events at all during verification — confirmed with a raw
+  service-role-key subscription (no RLS involved) that received zero events while a job's `progress`
+  column was actively changing in Postgres. Rather than debug the Elixir/Docker Realtime internals
+  (`supabase_realtime` publication and replication slot were both confirmed correctly configured —
+  the failure is deeper in the local Realtime tenant setup), polling is simpler, fully reliable, and
+  perfectly adequate for a single-owner tool. `jobs` stays in the `supabase_realtime` publication in
+  case this is revisited later (e.g. against a hosted Supabase project, where Realtime is known to
+  work reliably).
+- **2026-07-31** — Discovered mid-M8: passing a Remotion composition component as a `component` prop
+  from a Server Component into a "use client" wrapper breaks with "React.createContext is undefined"
+  — component references (and anything from a hook-using, non-"use client" module) can't cross the
+  Server→Client boundary as a prop the way plain data can. Fixed by giving each format its own
+  dedicated client player file that imports its own composition internally (mirroring the pattern
+  `ranking-preview-player.tsx` already used correctly), with the server page only ever passing plain
+  serializable data. Any future new-format player should follow the same per-format-file pattern, not
+  a generic "pass the component in" abstraction.
+- **2026-07-31** — Title Banner and Caption reuse Ranking List's `CURATED_GOOGLE_FONTS` list and the
+  extracted `clip-timing.ts`/`entrance-style.ts` helpers, but each has its **own** config type/file
+  (`title-banner-config.ts`, `caption-config.ts`) rather than a shared generic "text style config."
+  The three formats' `text` fields genuinely differ (base+current colors vs. stroke vs. background
+  pill), and forcing them into one shape now would either bloat it with unused fields per format or
+  require a discriminated union that complicates every consumer. Small duplication (font/position/
+  animation shape repeated three times) was judged cheaper than that abstraction right now.
+- **2026-07-31** — Title Banner and Caption got a simpler editor (`simple-style-editor.tsx`: numeric
+  X/Y position inputs) instead of a Konva drag canvas like Ranking List's. Pure time-budget call
+  within an already-large session, not a technical limitation — a Konva canvas could be added the
+  same way M4 did it. No save-as-template/apply-template library for these two formats either (the
+  `updateTemplateConfig` action works for them, but `saveAsTemplate`/`applyTemplate` and their UI are
+  still Ranking-List-specific). Both are reasonable follow-ups, not done here.
+- **2026-07-31** — Caption is per-clip granularity (each clip's `title` shown as its full caption for
+  that clip's whole duration), not true word-by-word sync. Word-by-word needs per-word timestamps,
+  which needs either an ASR/transcription integration or a manual per-word timing editor — neither
+  exists. Building either was out of scope for this pass; the composition and data model don't
+  preclude adding real word timing later (would mean richer per-clip caption data than just `title`).
