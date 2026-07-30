@@ -40,3 +40,17 @@ One line per non-obvious choice, with the reason. Newest at the bottom.
   the browser's `Next-Action` protocol — a plain `curl -d` POST to `/login` just re-renders the page
   and silently does nothing. Any future manual/automated test of a Server-Action-backed form needs a
   real browser (Playwright etc.), not curl.
+- **2026-07-31** — Clip files upload directly from the browser to Supabase Storage (via the browser
+  Supabase client), not through a Server Action. A Server Action would have to receive the whole
+  video file in the action's request body, which doesn't scale to real clip sizes; direct-to-Storage
+  upload is the standard pattern and Storage RLS already restricts it to the authenticated owner.
+  The DB row (`clips` insert) is a separate, small Server Action call after the upload succeeds.
+- **2026-07-31** — Reordering swaps `order_index` between the moved clip and its neighbor rather than
+  renumbering the whole list. Simpler, and gaps in `order_index` (e.g. after a delete) don't matter
+  since ordering only ever does `ORDER BY order_index ASC` — no code anywhere assumes contiguous
+  values.
+- **2026-07-31** — Added `data-testid="clip-row"` / `data-clip-id` to the clip row `<li>` elements.
+  Not for any app behavior — it's there because a naive Playwright test that located rows by visible
+  text broke the moment a row flipped into edit mode (text moves from a `<p>` into an `<input>`'s
+  `defaultValue`, which isn't part of `textContent`). A stable id-based hook is generally worth having
+  for future tests too, not just this one.

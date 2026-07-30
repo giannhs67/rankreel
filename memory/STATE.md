@@ -1,46 +1,51 @@
 ## Current status
 
-M0 and M1 are done and **verified against a real (local) Supabase instance** — not just code-complete.
-Local Supabase runs via Docker (`supabase start`, project_id `rankreel`); `.env.local` points at it.
-Auth works end-to-end: `proxy.ts` redirects logged-out requests to `/login`, login via Server Action
-works, the home page shows the signed-in owner, sign-out works. Verified with a scripted Playwright
-run (screenshots + console-error check), not just `curl`/build checks. Now starting M2 (upload &
-projects).
+M0, M1, and M2 are done and verified against a real local Supabase instance (Docker, `supabase
+start`). You can: log in, create a project, upload a real video file (uploaded straight from the
+browser to the `clips` Storage bucket), see it listed, reorder clips, edit title/number inline, and
+delete a clip (which removes both the DB row and the Storage object). All of this was driven through
+a real headless browser (Playwright), not just curl/build checks — see `memory/DECISIONS.md` for why
+curl doesn't work for anything using a Server Action form.
+
+No Remotion, no rendering, no templates yet — clips are just stored and organized. Next real feature
+work is M3 (Ranking List Remotion composition + live preview).
 
 ## Last session (2026-07-31)
 
 - Did:
-  - Ran `supabase init` + `supabase start` in `rankreel/` — local Docker stack (Postgres, Auth,
-    Storage, Studio, etc.) is up, project_id `rankreel`. `0001_init.sql` applied automatically on
-    start.
-  - Filled `.env.local` with the local stack's URL + anon/service-role JWTs (Supabase's well-known
-    local dev demo keys — same on every machine, not secrets). Local endpoints: API
-    `http://127.0.0.1:54321`, Studio `http://127.0.0.1:54323`, DB `postgresql://postgres:postgres@127.0.0.1:54322/postgres`.
-  - Ran `npm run create-owner` → created `owner@rankreel.local` / `dev-owner-password-change-me`
-    (**local dev credentials only** — change via `npm run reset-password` before this ever points at
-    a real/hosted project).
-  - Verified the full auth loop with a one-off Playwright script (chromium, headless): logged-out `/`
-    redirects to `/login`; login succeeds and lands on `/`; home page shows
-    "Signed in as owner@rankreel.local"; sign-out redirects back to `/login`. No console errors.
-    Screenshots confirm the UI actually renders (not just correct HTTP codes).
-  - Note: curl can't drive this login form — it's a React Server Action, which requires the
-    browser's `Next-Action` invocation protocol, not a plain form POST. Use a real browser (or
-    Playwright) to test anything past this point that involves a Server Action form.
+  - Added `shared/types.ts` (Project/Clip/Template/Job types matching the migration).
+  - Built the project dashboard (`app/page.tsx` + `app/actions.ts` + `app/new-project-form.tsx`):
+    create a project via Server Action, list existing projects.
+  - Built the project detail page (`app/projects/[id]/page.tsx`) with:
+    - `clip-upload-form.tsx` — client component that uploads the file directly to Supabase Storage
+      (bucket `clips`, path `${projectId}/${uuid}.${ext}`) via the browser Supabase client, then
+      calls the `addClip` Server Action to insert the DB row (avoids proxying large video files
+      through a Server Action's body).
+    - `clip-row.tsx` — inline edit (title/number), reorder (swap `order_index` with neighbor via
+      Server Actions), delete (removes Storage object + DB row). Added `data-testid="clip-row"` /
+      `data-clip-id` attributes for stable test targeting (the row's visible text changes once it
+      flips into edit mode, which broke naive text-based test selectors).
+    - `app/projects/[id]/actions.ts` — `addClip`, `updateClip`, `deleteClip`, `moveClip`.
+  - Added `components/app-header.tsx` (shared nav + sign-out), reused on both the dashboard and
+    project pages.
+  - Fixed two `@next/next/no-html-link-for-pages` lint errors (needed `next/link`, not `<a>`).
+  - Verified end-to-end with a Playwright script: login → create project → upload 2 real `.mp4`
+    files (from the sibling `watermark-remover/` sample clips) → confirmed list + order → reordered
+    → edited a title → deleted a clip → confirmed removal from **both** the clips list and, via
+    direct Storage/Postgres queries, actually gone from the `clips` bucket and the `clips` table (not
+    just hidden in the UI). Cleaned up all test-generated projects/files afterward.
 - Decisions: see `memory/DECISIONS.md`.
-- Broke / known issues:
-  - Still no *hosted* Supabase project or Vercel deployment — everything so far is local-only.
-  - The owner password above is a placeholder committed nowhere but worth rotating once this stops
-    being purely local.
+- Broke / known issues: none currently known. Still no hosted Supabase project / Vercel deploy.
 
 ## Next up (in priority order)
 
-1. M2 — Upload & project: create project, upload clips to the `clips` Storage bucket, list/reorder
-   clips, edit title + number per clip.
-2. Eventually: hosted Supabase project + Vercel deploy to close the last M0 checkbox (not blocking
-   M2+ local development).
+1. M3 — Ranking List Remotion composition: install Remotion, port the ranking-list layout (blurred
+   top bar, multi-color title, 1..N list that reveals per clip, letterboxed video) as a
+   `<Composition>` driven by a project's clips, add an in-app live preview via Remotion Player.
+2. Eventually: hosted Supabase project + Vercel deploy (still not blocking local dev).
 
 ## Open questions for the owner
 
 - Remotion Lambda (AWS) vs. a self-hosted render worker (Railway/Render/Fly) for M5 — spec recommends
-  Lambda, confirm before wiring AWS credentials.
+  Lambda, confirm before wiring AWS credentials. Not needed yet for M3 (local preview only).
 - When you're ready to deploy for real: hosted Supabase project region/naming preference?

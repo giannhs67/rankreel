@@ -20,7 +20,10 @@ detailed status and `memory/DECISIONS.md` for why non-obvious calls were made.
       doesn't need this — there's no public internet access to it).
 
 **M2 — Upload & project**
-- [ ] Upload clips to Supabase Storage. Create project, list clips, reorder, set title+number.
+- [x] Upload clips to Supabase Storage. Create project, list clips, reorder, set title+number.
+- [x] Delete clip (removes both the DB row and the Storage object).
+- [x] Verified end-to-end with Playwright + a real local Supabase instance: create project → upload
+      2 real video files → reorder → edit title → delete (confirmed gone from both DB and Storage).
 
 **M3 — Ranking template in Remotion**
 - [ ] Port the HTML ranking layout to a Remotion `<Composition>`: blurred top, multi-color title,
