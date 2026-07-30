@@ -1,11 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useLoadFont } from "@/lib/use-load-font";
 import { CURATED_GOOGLE_FONTS, type RankingListConfig } from "@/remotion/ranking-config";
-import { updateTemplateConfig } from "./actions";
+import { applyTemplate, saveAsTemplate, updateTemplateConfig } from "./actions";
 
 const KonvaCanvas = dynamic(() => import("./konva-canvas").then((m) => m.KonvaCanvas), {
   ssr: false,
@@ -23,18 +24,27 @@ export function TemplateEditor({
   templateId,
   initialConfig,
   initialCustomFontUrl,
+  savedTemplates,
 }: {
   projectId: string;
   templateId: string;
   initialConfig: RankingListConfig;
   initialCustomFontUrl: string | null;
+  savedTemplates: { id: string; name: string }[];
 }) {
+  const router = useRouter();
   const [config, setConfig] = useState(initialConfig);
   const [customFontUrl, setCustomFontUrl] = useState(initialCustomFontUrl);
   const [fontUploadBusy, setFontUploadBusy] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [newTemplateName, setNewTemplateName] = useState("");
+  const [templateSaveBusy, setTemplateSaveBusy] = useState(false);
+  const [templateSaveMessage, setTemplateSaveMessage] = useState<string | null>(null);
+  const [applyTemplateId, setApplyTemplateId] = useState("");
+  const [applyBusy, setApplyBusy] = useState(false);
 
   const fontVersion = useLoadFont(config, customFontUrl);
 
@@ -93,6 +103,49 @@ export function TemplateEditor({
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed.");
       setSaveState("error");
+    }
+  }
+
+  async function handleSaveAsTemplate() {
+    setTemplateSaveBusy(true);
+    setTemplateSaveMessage(null);
+    setError(null);
+    try {
+      await saveAsTemplate(projectId, newTemplateName, config);
+      setNewTemplateName("");
+      setTemplateSaveMessage(`Saved as "${newTemplateName.trim()}".`);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save template.");
+    } finally {
+      setTemplateSaveBusy(false);
+    }
+  }
+
+  async function handleApplyTemplate() {
+    if (!applyTemplateId) return;
+    setApplyBusy(true);
+    setError(null);
+    try {
+      const applied = await applyTemplate(projectId, templateId, applyTemplateId);
+      setConfig(applied);
+
+      if (applied.font.source === "custom" && applied.font.customFontPath) {
+        const supabase = createClient();
+        const { data: signed } = await supabase.storage
+          .from("fonts")
+          .createSignedUrl(applied.font.customFontPath, 60 * 60);
+        setCustomFontUrl(signed?.signedUrl ?? null);
+      } else {
+        setCustomFontUrl(null);
+      }
+
+      setSaveState("idle");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to apply template.");
+    } finally {
+      setApplyBusy(false);
     }
   }
 
@@ -247,6 +300,67 @@ export function TemplateEditor({
             <span className="text-sm text-green-600 dark:text-green-400">Saved.</span>
           )}
           {error && <span className="text-sm text-red-600 dark:text-red-400">{error}</span>}
+        </div>
+
+        <div className="space-y-3 border-t border-black/10 pt-5 dark:border-white/10">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
+            Templates
+          </h2>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">Save this look as a template</label>
+            <div className="flex gap-2">
+              <input
+                value={newTemplateName}
+                onChange={(e) => setNewTemplateName(e.target.value)}
+                placeholder="Template name, e.g. Neon Countdown"
+                className="flex-1 rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/15"
+              />
+              <button
+                type="button"
+                onClick={handleSaveAsTemplate}
+                disabled={templateSaveBusy || !newTemplateName.trim()}
+                className="shrink-0 rounded-md border border-black/15 px-4 py-2 text-sm disabled:opacity-60 dark:border-white/15"
+              >
+                {templateSaveBusy ? "Saving…" : "Save as template"}
+              </button>
+            </div>
+            {templateSaveMessage && (
+              <p className="mt-1 text-sm text-green-600 dark:text-green-400">{templateSaveMessage}</p>
+            )}
+          </div>
+
+          {savedTemplates.length > 0 && (
+            <div>
+              <label className="mb-1 block text-sm font-medium">Apply a saved template</label>
+              <div className="flex gap-2">
+                <select
+                  value={applyTemplateId}
+                  onChange={(e) => setApplyTemplateId(e.target.value)}
+                  className="flex-1 rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/15"
+                >
+                  <option value="">Choose a template…</option>
+                  {savedTemplates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={handleApplyTemplate}
+                  disabled={applyBusy || !applyTemplateId}
+                  className="shrink-0 rounded-md border border-black/15 px-4 py-2 text-sm disabled:opacity-60 dark:border-white/15"
+                >
+                  {applyBusy ? "Applying…" : "Apply"}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-black/40 dark:text-white/40">
+                Applies and saves immediately to this project — further tweaks below still need
+                their own &quot;Save changes&quot;.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

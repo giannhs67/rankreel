@@ -93,3 +93,23 @@ One line per non-obvious choice, with the reason. Newest at the bottom.
   (`font.customFontPath`), never a signed URL. Signed URLs expire; a path doesn't. Every page that
   needs to actually render the font (editor, preview) mints a fresh signed URL server-side at load
   time from that stored path — same pattern already used for clip video URLs.
+- **2026-07-31** — M5 (Remotion Lambda MP4 export) was explicitly skipped, not attempted or stubbed.
+  The owner confirmed no AWS account exists right now, and Remotion Lambda fundamentally needs one
+  (it deploys a Lambda function + S3 bucket into the owner's AWS account) — there's no way to build
+  and verify this milestone locally the way M0–M4/M6 were. Jumped to M6 instead since it only needed
+  infrastructure M0–M4 already provide. When AWS becomes available (or if a non-AWS self-hosted
+  render worker is preferred — see ClaudePrompt.md §2's fallback option), pick M5 back up.
+- **2026-07-31** — `applyTemplate` writes immediately (applies **and** persists to the project's own
+  template row in one action), rather than only updating client-side editor state pending a separate
+  "Save changes" click. Treated "Apply" as a verb that takes effect now, consistent with how a
+  preset/theme picker usually behaves elsewhere; "Save changes" remains for the manual
+  slider/color-picker edits made after applying. The UI copy under the Apply button says exactly this
+  so it isn't a silent surprise.
+- **2026-07-31** — A saved/reusable template is just a `templates` row like any other — there's no
+  `is_saved` / `is_library` flag distinguishing "a project's own private style" from "something the
+  owner explicitly chose to save for reuse." The editor's saved-templates dropdown instead filters by
+  excluding the current project's own `template_id`. This means every project's auto-created "{name}
+  style" row is technically visible/applicable from any *other* project's editor too — not just
+  templates saved via "Save as template." Acceptable for a single-owner tool (it's all the same
+  person's data either way) and avoids a schema change; revisit only if the list of "other projects'
+  incidental style rows" starts cluttering the picker in practice.

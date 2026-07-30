@@ -69,6 +69,14 @@ export default async function ProjectEditorPage({
     customFontUrl = signed?.signedUrl ?? null;
   }
 
+  // Saved, reusable templates (excludes this project's own live/private template row).
+  const { data: savedTemplates } = await supabase
+    .from("templates")
+    .select("id, name")
+    .eq("format", "ranking_list")
+    .neq("id", template.id)
+    .order("created_at", { ascending: false });
+
   return (
     <div className="min-h-screen">
       <AppHeader email={user.email ?? ""} />
@@ -96,6 +104,7 @@ export default async function ProjectEditorPage({
           templateId={template.id}
           initialConfig={config}
           initialCustomFontUrl={customFontUrl}
+          savedTemplates={savedTemplates ?? []}
         />
       </main>
     </div>

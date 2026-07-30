@@ -57,9 +57,21 @@ detailed status and `memory/DECISIONS.md` for why non-obvious calls were made.
 **M5 — Render one MP4 (Remotion Lambda)**
 - [ ] `deploy-lambda`; app enqueues job → Lambda renders → MP4 to `renders` bucket; jobs row updated.
 - [ ] Live progress via Supabase Realtime on `jobs`.
+- Skipped for now — needs an AWS account (owner doesn't have one currently). Revisit once available;
+  the self-hosted-worker alternative from ClaudePrompt.md §2 is the fallback if AWS stays off the
+  table. Jumped ahead to M6 in the meantime since it only needed what M0–M4 already built.
 
 **M6 — Templates**
-- [ ] Save current look as a template; apply template to a new project.
+- [x] Save current look as a named, reusable template (`saveAsTemplate` — snapshots the editor's
+      current config into a new `templates` row, independent of any project).
+- [x] Apply a saved template to a project (`applyTemplate` — copies the chosen template's
+      `config_json` into the project's own live template row; takes effect immediately, further
+      tweaks still need their own explicit save).
+- [x] Verified end-to-end with Playwright: styled project A distinctively (Oswald font, magenta,
+      64px, fade), saved it as a named template, created a fresh project B, applied that template,
+      and confirmed via direct Postgres queries that all three rows (A's own template, the saved
+      library entry, and B's own template after applying) hold identical config — not just that the
+      UI displayed the right values.
 
 **M7 — Batch**
 - [ ] Paste/import a JSON array of {clip, title, number}; enqueue many jobs; progress dashboard.

@@ -1,70 +1,61 @@
 ## Current status
 
-M0–M4 are done and verified against a real local Supabase instance (Docker, `supabase start`). You
-can: log in, create a project, upload real video files, reorder/edit/delete clips, preview the actual
-Ranking List composition live, and now **style it** — drag the text block to reposition it, change
-font (curated Google Fonts or a custom uploaded `.ttf`/`.otf`/`.woff2`), size, base/current-item
-colors, stroke, and entrance animation (none/fade/slide/pop) — all persisted per-project (via a
-`templates` row) and reflected immediately in the live preview.
+M0–M4 and M6 are done and verified against a real local Supabase instance (Docker, `supabase
+start`). M5 (actual MP4 export via Remotion Lambda) is **skipped for now** — the owner doesn't have
+an AWS account yet, and it's the one milestone so far that can't be built/verified without one. M6
+was pulled forward since it only needed what M0–M4 already provide.
 
-Not yet built: real MP4 export (M5), reusable/shareable templates across projects (M6 — the data
-model already supports it, just no "apply this template to a new project" UI yet), batch (M7), the
-other two composition formats (M8). Per-clip duration in the preview is still a fixed 4s placeholder
-— no trimming UI exists yet.
+You can now: log in; create projects; upload/reorder/edit/delete clips; live-preview the Ranking
+List composition; style it (position, font, colors, stroke, entrance animation) via the Konva editor;
+**save that look as a named, reusable template; and apply a saved template to any other project**
+(applies + persists immediately). Not yet built: actual MP4 export (M5, blocked on AWS), real
+per-clip trimming (preview duration is still a 4s placeholder), batch (M7), the other two composition
+formats (M8).
 
 ## Last session (2026-07-31, continued)
 
-- Did (M4):
-  - `remotion/ranking-config.ts`: `RankingListConfig` type (font/text/position/animation),
-    `DEFAULT_RANKING_CONFIG`, `resolveRankingConfig()` (merges partial/legacy DB JSON with defaults
-    so old/empty config_json never crashes rendering), `CURATED_GOOGLE_FONTS` (8 fonts).
-  - `lib/use-load-font.ts`: loads a Google Fonts stylesheet or a custom FontFace from a signed
-    Storage URL, returns a version counter (not a boolean — see DECISIONS.md) so canvas renderers
-    know when to redraw.
-  - `remotion/RankingList.tsx`: now takes a `config` prop and actually uses it — font family, sizes,
-    colors, stroke, and a real per-row entrance animation (`entranceStyle()` using
-    `interpolate`/`spring` off frames-since-that-row-was-revealed). Position is a draggable offset
-    applied to the whole list block.
-  - `/projects/[id]/editor`: new route. Server Component gets-or-creates a `templates` row for the
-    project (format `ranking_list`, linked via `projects.template_id`, created lazily on first visit
-    — Server Components can safely do this kind of write, it's not restricted like `cookies().set()`
-    is), resolves config + a signed custom-font URL if needed, hands off to `<TemplateEditor>`.
-  - `template-editor.tsx` (client) + `konva-canvas.tsx` (client, dynamically imported with
-    `ssr: false` since Konva touches `window` at import time): a scaled-down (360×640, 1/3 scale)
-    live WYSIWYG canvas showing two sample rows, draggable to set position; plain HTML controls for
-    font/size/colors/stroke/animation; a file input wired to upload straight to the `fonts` Storage
-    bucket then load it via `FontFace`; one explicit "Save changes" button persisting the whole
-    config via a Server Action (`updateTemplateConfig`).
-  - `/projects/[id]/preview` now loads the project's template config + resolves a fresh signed
-    custom-font URL, passes both into the Player, which also runs `useLoadFont` so the font is
-    actually loaded before/while it renders (DOM text re-renders on its own once a web font loads —
-    only the Konva canvas needed an explicit redraw trigger).
-  - Fixed an ESLint `react-hooks/set-state-in-effect` violation in the font hook by switching from a
-    boolean `setReady(false)` reset to an always-incrementing counter, never set synchronously at the
-    top of the effect.
-  - Verified thoroughly with Playwright: uploaded a clip, opened the editor, confirmed a real
-    `<canvas>` renders, changed font size/colors/animation via the controls, dragged the Konva group
-    (had to slow the synthetic mouse-move down — a single big jump doesn't register as a Konva drag,
-    it needs paced intermediate `mousemove` events), uploaded a real system font file
-    (`Academy Engraved LET Fonts.ttf`) end-to-end through Storage, saved, and — critically — queried
-    Postgres directly afterward and confirmed `config_json` held the *exact* dragged position
-    (delta matched the mouse movement to the pixel) and every style field. Also confirmed in the
-    preview page's DOM that the rendered row's `font-family` actually contains the custom font name.
-    No console errors. All test data (project, clip, font file) cleaned up afterward.
-- Decisions: see `memory/DECISIONS.md`.
+- Did (M6):
+  - `app/projects/[id]/editor/actions.ts`: added `saveAsTemplate(projectId, name, config)` (inserts
+    a new, independent `templates` row — doesn't touch the project's own template) and
+    `applyTemplate(projectId, currentTemplateId, sourceTemplateId)` (reads the source template's
+    `config_json`, resolves it against defaults, writes it into the *project's own* template row,
+    and returns the resolved config so the client can update its editor state immediately without a
+    full reload).
+  - `editor/page.tsx`: now also fetches the owner's other saved templates (`format = 'ranking_list'`,
+    excluding the current project's own template row) and passes that list down.
+  - `template-editor.tsx`: added a "Templates" section — a name input + "Save as template" button,
+    and (when any exist) a dropdown + "Apply" button for saved templates. Applying a template that
+    uses a custom font re-signs a fresh Storage URL client-side for it (the returned config only has
+    the font's *path*, same pattern as everywhere else custom fonts appear) so the font actually
+    loads after applying, not just the config fields.
+  - Verified with Playwright: styled a project distinctively (Oswald, magenta `#ff00ff`, 64px font,
+    fade animation), saved it as a template named "Neon Countdown ...", created a second, plain
+    project, applied that template to it, and confirmed — both in the editor's own UI state *and* via
+    three separate direct Postgres queries (project A's template, the saved library template, project
+    B's template after applying) — that all three hold byte-identical style config. Not a UI-only
+    check. No console errors. All test data cleaned up afterward.
+- Decisions: M5 explicitly skipped/deferred rather than attempted without AWS credentials; see
+  `memory/DECISIONS.md` and the note now in `ROADMAP.md`'s M5 section.
 - Broke / known issues: none currently known.
 
 ## Next up (in priority order)
 
-1. M5 — Render one MP4 via Remotion Lambda: `deploy-lambda` script, app enqueues a `jobs` row, Lambda
-   renders using the same `RankingList` composition + resolved config, output lands in the `renders`
-   bucket, Realtime progress on `jobs`. Needs AWS credentials — ask the owner before wiring these up.
-2. Real per-clip trimming would make the preview's duration less of a placeholder — worth doing
-   before or alongside M5 rather than after, since export should use real durations too.
-3. Eventually: hosted Supabase project + Vercel deploy (still not blocking local dev work).
+1. M5 revisit, once an AWS account exists — or build the self-hosted-worker alternative
+   (ClaudePrompt.md §2: a Railway/Render/Fly process polling the `jobs` table) if the owner would
+   rather avoid AWS entirely. Ask which before starting.
+2. Real per-clip trimming (`trim_start`/`trim_end` UI) — still a known gap, worth doing before M5
+   actually renders anything, since export should use real durations.
+3. M7 — Batch (paste/import a JSON array of {clip, title, number}, enqueue many jobs) and M8 (the
+   other two composition formats) don't strictly need M5 to be *built*, but batch specifically implies
+   rendering many jobs, so it's more naturally sequenced after M5. M8 (Title Banner / Caption
+   compositions) could reasonably be built next instead if the owner wants to keep making visual
+   progress without AWS.
+4. Eventually: hosted Supabase project + Vercel deploy (still not blocking local dev work).
 
 ## Open questions for the owner
 
-- Remotion Lambda (AWS) vs. a self-hosted render worker (Railway/Render/Fly) for M5 — spec recommends
-  Lambda; need AWS credentials in `.env.local` before that work can start for real.
-- When you're ready to deploy for real: hosted Supabase project region/naming preference?
+- Confirmed: no AWS account right now. When one exists (or if a non-AWS render worker is preferred
+  instead), revisit M5.
+- Given M5 is blocked, does the owner want M8 (more composition formats) or M7 (batch, though batch
+  without real rendering is just "enqueue many jobs that never render") next? Recommend M8.
+- When ready to deploy for real: hosted Supabase project region/naming preference?
