@@ -6,10 +6,8 @@ affected version — please report privately rather than filing a public issue.
 
 ## Reporting a vulnerability
 
-Preferred: open a [GitHub Security Advisory](../../security/advisories/new) on this repository (private
-by default, visible only to maintainers until resolved).
-
-Alternative: email **ahadnasir123@gmail.com** with:
+Please report privately via a [GitHub Security Advisory](../../security/advisories/new) on this
+repository (private by default, visible only to maintainers until resolved). Include:
 
 - A description of the vulnerability and its impact.
 - Steps to reproduce (or a proof of concept).

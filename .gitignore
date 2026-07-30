@@ -49,8 +49,8 @@ next-env.d.ts
 # Coverage
 coverage/
 
-# Local AI-assistant session/memory files — not published, kept local only
-/CLAUDE.md
+# Local dev notes — not published, kept local only
+/AGENT_NOTES.md
 /ROADMAP.md
-/ClaudePrompt.md
+/PROJECT_BRIEF.md
 /memory/

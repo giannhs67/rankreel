@@ -1,7 +1,7 @@
 -- RankReel — initial schema (M0)
 -- Single-owner app: every row is scoped to owner_id = auth.uid().
--- There is exactly one real user per deployment (see CLAUDE.md / ClaudePrompt.md §3),
--- so storage policies below check "auth.uid() is not null" rather than matching a
+-- There is exactly one real user per deployment (see README.md), so storage policies below
+-- check "auth.uid() is not null" rather than matching a
 -- per-user folder prefix — any authenticated request *is* the owner.
 
 create table if not exists templates (

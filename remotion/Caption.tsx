@@ -4,11 +4,10 @@ import { clipFramesFor, getClipStartFrames, getCurrentClipIndex, getTotalDuratio
 import { entranceStyle } from "./entrance-style";
 
 // Each clip's `title` doubles as its full caption sentence, shown for that clip's whole
-// duration. This is NOT true word-by-word sync (ClaudePrompt.md's "word-by-word caption
-// sync" under M10) — that needs per-word timestamps, which means either an ASR/transcription
-// integration or a manual per-word timing editor, neither of which exists yet. See
-// memory/DECISIONS.md. This composition is real and renders actual captions, just at
-// per-clip granularity rather than per-word.
+// duration. This is NOT true word-by-word sync — that needs per-word timestamps, which means
+// either an ASR/transcription integration or a manual per-word timing editor, neither of which
+// exists yet. This composition is real and renders actual captions, just at per-clip
+// granularity rather than per-word.
 export type CaptionClip = {
   id: string;
   title: string;

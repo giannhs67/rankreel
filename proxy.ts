@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
 
-// Next.js 16 renamed `middleware.ts` to `proxy.ts` — same behavior, see CLAUDE.md.
+// Next.js 16 renamed `middleware.ts` to `proxy.ts` — same behavior, different filename.
 export async function proxy(request: NextRequest) {
   return updateSession(request);
 }

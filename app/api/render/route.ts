@@ -76,10 +76,11 @@ export async function POST(request: Request) {
 
   // Deliberately not awaited: this Next.js server is a persistent local Node process (not a
   // Vercel serverless function, which is why heavy rendering is safe to run in-process here at
-  // all — see ClaudePrompt.md's "never run heavy renders on Vercel functions" guardrail). The
-  // response returns immediately; the client polls `jobs` for progress (see memory/DECISIONS.md
-  // for why polling instead of Supabase Realtime). Actual render work is serialized via
-  // renderQueue, not run concurrently, even if several POSTs land close together (batch renders).
+  // all — see CONTRIBUTING.md's "never run heavy renders on Vercel functions" guardrail). The
+  // response returns immediately; the client polls `jobs` for progress (Supabase Realtime's
+  // postgres_changes wasn't reliable for this locally, so we poll instead). Actual render work
+  // is serialized via renderQueue, not run concurrently, even if several POSTs land close
+  // together (batch renders).
   renderQueue = renderQueue.then(() =>
     runRender(format, projectId, job.id, renderProps).catch((err) => {
       console.error(`[render] job ${job.id} failed:`, err);

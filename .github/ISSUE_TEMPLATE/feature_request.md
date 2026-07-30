@@ -17,8 +17,8 @@ Any alternative solutions or features you've considered.
 
 **Does this fit the project's guardrails?**
 RankReel is self-hosted only (no SaaS/billing/multi-tenant), renders never run inside Vercel
-functions, and there's no telemetry. See [ClaudePrompt.md](../../ClaudePrompt.md) §7. If your request
-touches any of these, explain how it stays within them.
+functions, and there's no telemetry. See [CONTRIBUTING.md](../../CONTRIBUTING.md#guardrails). If your
+request touches any of these, explain how it stays within them.
 
 **Additional context**
 Anything else — mockups, related issues, links.
