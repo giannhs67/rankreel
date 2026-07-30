@@ -22,3 +22,11 @@ One line per non-obvious choice, with the reason. Newest at the bottom.
   only ever one authenticated user per deployment, so "authenticated" and "is the owner" are
   equivalent. Would need revisiting if multi-user support were ever added (it's explicitly out of
   scope per the guardrails).
+- **2026-07-31** — `create-owner`/`reset-password` scripts are plain `.mjs` (not TypeScript) run via
+  `node --env-file=.env.local`, instead of adding `tsx`/`ts-node` as a dependency. Node 24 (in use)
+  supports `--env-file` natively; these scripts are simple enough that skipping a TS toolchain for
+  them isn't a real loss, and it's one fewer dependency for contributors to reason about.
+- **2026-07-31** — Disabling public signups in Supabase and creating the owner account are documented
+  manual steps (README/CONTRIBUTING), not automated. There's no Supabase Management API call that's
+  simpler than clicking the dashboard toggle, and scripting Supabase project-level auth config would
+  need a personal access token with broader scope than the service-role key already in `.env.local`.

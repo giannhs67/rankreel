@@ -11,9 +11,11 @@ detailed status and `memory/DECISIONS.md` for why non-obvious calls were made.
 - [ ] Deploy the empty app to Vercel; wire Supabase env vars in Vercel.
 
 **M1 — Auth (functional)**
-- [ ] Supabase Auth email+password, signups disabled, `create-owner` script.
-- [ ] `@supabase/ssr` session, `proxy.ts` guards (see CLAUDE.md — replaces `middleware.ts` in Next 16),
-      /login, /logout. reset-password CLI.
+- [x] Supabase Auth email+password, `create-owner` / `reset-password` scripts (service-role key).
+- [x] `@supabase/ssr` session, `proxy.ts` guards (see CLAUDE.md — replaces `middleware.ts` in Next 16),
+      /login, /logout.
+- [ ] Owner runs `create-owner` and disables public signups on their own Supabase project (manual,
+      documented in README — can't be verified until a real project exists).
 
 **M2 — Upload & project**
 - [ ] Upload clips to Supabase Storage. Create project, list clips, reorder, set title+number.

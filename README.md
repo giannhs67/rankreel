@@ -42,14 +42,21 @@ Full rationale for these choices, the data model, and the milestone roadmap live
 RankReel is designed to run as **your own deployment**, not a shared service:
 
 1. Create your own [Supabase](https://supabase.com) project.
-2. Fork/clone this repo and copy `.env.example` to `.env.local`, filling in your Supabase keys (and
-   AWS credentials if using Remotion Lambda for rendering).
-3. Run the Supabase SQL migrations in `/supabase/migrations` against your project.
-4. Create your single owner account (`npm run create-owner`).
-5. `npm install && npm run dev` to run locally, or deploy to Vercel with the same env vars set.
+2. Fork/clone this repo, `npm install`, then copy `.env.example` to `.env.local` and fill in your
+   Supabase project's URL + anon key + service-role key (and AWS credentials later, if you use
+   Remotion Lambda for rendering).
+3. Run `supabase/migrations/0001_init.sql` against your project (Supabase Dashboard → SQL Editor, or
+   the Supabase CLI) — creates the tables, RLS policies, and the `clips`/`renders`/`fonts` storage
+   buckets.
+4. Create your single owner account: `npm run create-owner -- you@example.com "a strong password"`
+   (or set `OWNER_EMAIL`/`OWNER_PASSWORD` in `.env.local` and just run `npm run create-owner`).
+5. **Disable public signups** in Supabase Dashboard → Authentication → Sign In / Providers → Email →
+   turn off "Allow new users to sign up". This is what keeps it a single-owner app.
+6. `npm run dev` to run locally at `http://localhost:3000` (redirects to `/login`), or deploy to
+   Vercel with the same env vars set.
 
-(Detailed step-by-step setup docs will land alongside the M0/M1 milestones — see
-[ROADMAP.md](ROADMAP.md).)
+Forgot your password? `npm run reset-password -- you@example.com "new password"` (uses the
+service-role key directly — no reset email needed).
 
 ## Contributing
 

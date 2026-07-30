@@ -20,7 +20,8 @@ everyone who self-hosts.
 3. Copy `.env.example` to `.env.local` and fill in your Supabase project's keys.
 4. Run the SQL migrations in `/supabase/migrations` against your project.
 5. `npm install`
-6. `npm run create-owner` to create your local owner account.
+6. `npm run create-owner -- you@example.com "a strong password"` to create your local owner account,
+   then disable public signups in Supabase Dashboard → Authentication → Sign In / Providers → Email.
 7. `npm run dev` and open `http://localhost:3000`.
 
 Never commit `.env.local`, real Supabase/AWS credentials, or media containing identifiable people.

@@ -1,40 +1,42 @@
 ## Current status
 
-M0 skeleton exists locally: Next.js 16 (App Router, TS, Tailwind v4) scaffolded, repo layout in place
-(`/app /remotion /worker /shared /supabase /scripts /memory`), Supabase SQL migration written
-(`supabase/migrations/0001_init.sql` — tables + RLS + storage bucket policies), and the memory/roadmap
-files exist. Nothing is deployed yet, and there is no live Supabase project wired up — the app runs
-locally with placeholder/no env vars and shows only the Next.js default homepage. No auth, no upload,
-no rendering yet.
+M0 + M1 are code-complete locally. Next.js 16 app with a full auth loop: `proxy.ts` guards every route
+except `/login`, `/login` signs in via a Server Action against Supabase Auth, `/` shows the signed-in
+owner's email with a working sign-out form, and `scripts/create-owner.mjs` /
+`scripts/reset-password.mjs` manage the single owner account via the service-role key. None of this
+has been exercised against a **real** Supabase project yet — there isn't one wired up. Verified so far:
+`npm run build`, `npm run dev`, and `npm run lint` all succeed, and hitting `/` or `/login` without
+real Supabase env vars fails with Supabase's own clear "URL and Key are required" error (expected —
+proves the wiring is correct, not that auth actually works yet).
 
 ## Last session (2026-07-31)
 
 - Did:
-  - Scaffolded Next.js (App Router + TS + Tailwind v4 + ESLint) via `create-next-app`, merged into
-    the existing `rankreel/` repo alongside the OSS docs (README/LICENSE/CONTRIBUTING/etc. from the
-    open-source setup pass earlier the same day).
-  - Created `/remotion /worker /shared /supabase/migrations /scripts /memory` directories.
-  - Wrote `supabase/migrations/0001_init.sql`: `templates`, `projects`, `clips`, `jobs` tables, RLS
-    policies (`owner_id = auth.uid()`), Realtime on `jobs`, and storage bucket + policy setup for
-    `clips` / `renders` / `fonts` (private, owner-only via `auth.uid() is not null` since it's a
-    single-owner app).
-  - Created `CLAUDE.md`, `ROADMAP.md` (M0–M10 checklist), this file, and `memory/DECISIONS.md`.
+  - M0 (previous session): scaffolded Next.js 16, repo layout, Supabase migration, memory files.
+  - M1 (this session): added `@supabase/supabase-js` + `@supabase/ssr`; wrote
+    `lib/supabase/{server,client,proxy}.ts`; wrote root `proxy.ts` (Next 16's replacement for
+    `middleware.ts`) which redirects unauthenticated requests to `/login` and authenticated ones away
+    from it; built `/login` (Server Action + `useActionState` form) and `/logout` (POST Route
+    Handler); rewrote the placeholder homepage to show the signed-in user + a real sign-out form;
+    wrote `scripts/create-owner.mjs` and `scripts/reset-password.mjs` (both use
+    `auth.admin.*` with the service-role key, take email/password as CLI args or
+    `OWNER_EMAIL`/`OWNER_PASSWORD` env vars); wired both into `package.json` via
+    `node --env-file=.env.local`; updated README/CONTRIBUTING with the exact self-hosting steps
+    (create project → migrate → create-owner → disable signups → dev/deploy).
 - Decisions: see `memory/DECISIONS.md`.
 - Broke / known issues:
-  - `npm audit` reports 12 high-severity advisories, all nested inside `next@16.2.12`'s own dependency
-    tree (eslint's minimatch, postcss, sharp/libvips). No non-breaking fix exists yet — see DECISIONS.
-  - No Supabase project exists yet — nothing has been run against a real database.
-  - Not deployed to Vercel — needs the project owner's Vercel account.
+  - Still no real Supabase project — auth is wired but functionally untested end-to-end. Whoever
+    picks this up next should create one, fill `.env.local`, run the migration, run `create-owner`,
+    and click through `/login` → `/` → sign out once for real before trusting this milestone fully.
+  - Not deployed to Vercel yet.
 
 ## Next up (in priority order)
 
-1. Owner creates a Supabase project, fills in `.env.local` from `.env.example`, and runs
-   `supabase/migrations/0001_init.sql` against it (via Supabase SQL editor or CLI).
-2. Owner connects the repo to Vercel (or runs `vercel` locally) and sets the same env vars there, to
-   close out the remaining M0 checkboxes.
-3. Start M1: Supabase Auth (email+password, signups disabled), `create-owner` script,
-   `proxy.ts` route guard (NOT `middleware.ts` — see CLAUDE.md), `/login` + `/logout`,
-   `reset-password` script.
+1. Owner creates a Supabase project, fills `.env.local`, runs `supabase/migrations/0001_init.sql`,
+   runs `npm run create-owner`, disables public signups, and does one real login/logout pass locally.
+2. Deploy to Vercel with the same env vars (closes out the last M0 checkbox).
+3. Start M2 — Upload & project: upload clips to Supabase Storage, create project, list/reorder clips,
+   set title + number per clip.
 
 ## Open questions for the owner
 
