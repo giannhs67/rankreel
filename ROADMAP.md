@@ -26,9 +26,17 @@ detailed status and `memory/DECISIONS.md` for why non-obvious calls were made.
       2 real video files → reorder → edit title → delete (confirmed gone from both DB and Storage).
 
 **M3 — Ranking template in Remotion**
-- [ ] Port the HTML ranking layout to a Remotion `<Composition>`: blurred top, multi-color title,
-      1..N list that reveals per clip, letterboxed clip. Props-driven from project data.
-- [ ] Live preview in-app (Remotion Player).
+- [x] `remotion/RankingList.tsx`: blurred backdrop of the current clip behind the ranking list,
+      list reveals top-down as clips play (current entry highlighted), current clip letterboxed
+      below. Props-driven (`clips: RankingClip[]`, ordered #N-first → #1-last to match playback).
+- [x] Live preview in-app (`@remotion/player`) at `/projects/[id]/preview`, fed real signed Storage
+      URLs for the owner's uploaded clips.
+- [x] Verified end-to-end with Playwright: uploaded 3 real clips, opened preview, confirmed the
+      Player actually renders `<video>` elements, clicked play, watched playback time advance, and
+      confirmed the list grows from just "#5" to "#5 + #4" (current highlighted) as playback crosses
+      the first clip boundary.
+- [ ] Per-clip duration is currently a fixed 4s placeholder unless `trim_start`/`trim_end` are set
+      (nothing sets them yet — that's real trimming UI, deferred to M4's editor work).
 
 **M4 — Text editor (Konva)**
 - [ ] Move/place text layers, color per phrase, stroke/outline, font size. Persist to config_json.

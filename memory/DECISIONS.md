@@ -54,3 +54,17 @@ One line per non-obvious choice, with the reason. Newest at the bottom.
   text broke the moment a row flipped into edit mode (text moves from a `<p>` into an `<input>`'s
   `defaultValue`, which isn't part of `textContent`). A stable id-based hook is generally worth having
   for future tests too, not just this one.
+- **2026-07-31** — Ranking List clip duration in the preview is a fixed 4-second placeholder unless
+  a clip's `trim_start`/`trim_end` are both set (nothing sets them yet). Probing real video duration
+  server-side (ffprobe) or client-side (`@remotion/media-utils`) was judged out of scope for "get the
+  composition working" — real trimming is genuinely an M4 (editor) concern, not an M3 one, and a
+  placeholder duration doesn't block verifying the composition/reveal logic itself.
+- **2026-07-31** — The Ranking List composition and its live preview only needed `remotion` +
+  `@remotion/player` (both lightweight, browser-only). Did **not** install `@remotion/renderer` /
+  `@remotion/lambda` yet — those need headless Chrome + ffmpeg and are M5's concern (actual MP4
+  export), not M3's (in-app preview only). Keeps this milestone's dependency footprint minimal.
+- **2026-07-31** — Signed Storage URLs for preview use a 30-minute TTL, generated fresh on every
+  page load of `/projects/[id]/preview` via the owner's own authenticated session (not the
+  service-role key — RLS still applies). Long enough for a preview session, short enough that a
+  leaked URL isn't a standing liability. No caching/reuse of signed URLs across requests — simplicity
+  over a marginal API-call savings.

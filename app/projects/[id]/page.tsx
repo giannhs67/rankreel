@@ -36,11 +36,21 @@ export default async function ProjectPage({
     <div className="min-h-screen">
       <AppHeader email={user.email ?? ""} />
       <main className="mx-auto max-w-2xl space-y-8 p-6">
-        <div>
-          <Link href="/" className="text-sm text-black/50 hover:underline dark:text-white/50">
-            ← Projects
-          </Link>
-          <h1 className="mt-1 text-xl font-semibold">{project.name}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <Link href="/" className="text-sm text-black/50 hover:underline dark:text-white/50">
+              ← Projects
+            </Link>
+            <h1 className="mt-1 text-xl font-semibold">{project.name}</h1>
+          </div>
+          {!!clips?.length && (
+            <Link
+              href={`/projects/${project.id}/preview`}
+              className="shrink-0 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background"
+            >
+              Preview
+            </Link>
+          )}
         </div>
 
         <section>
