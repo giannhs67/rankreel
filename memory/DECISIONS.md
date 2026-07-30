@@ -30,3 +30,13 @@ One line per non-obvious choice, with the reason. Newest at the bottom.
   manual steps (README/CONTRIBUTING), not automated. There's no Supabase Management API call that's
   simpler than clicking the dashboard toggle, and scripting Supabase project-level auth config would
   need a personal access token with broader scope than the service-role key already in `.env.local`.
+- **2026-07-31** — Development happens against a **local** Supabase instance (`supabase init` +
+  `supabase start`, Docker), not a hosted project. Local dev keys in `.env.local` are Supabase's
+  well-known local demo JWTs (identical on every machine running `supabase start` — not secrets, safe
+  in a local-only `.env.local`). "Disable public signups" doesn't apply locally since the local stack
+  isn't reachable from the public internet; that step is deferred until there's a hosted project.
+- **2026-07-31** — Auth was verified with a throwaway Playwright script (chromium, headless) run
+  outside the repo, rather than `curl`. Reason: the login form is a React Server Action, invoked via
+  the browser's `Next-Action` protocol — a plain `curl -d` POST to `/login` just re-renders the page
+  and silently does nothing. Any future manual/automated test of a Server-Action-backed form needs a
+  real browser (Playwright etc.), not curl.

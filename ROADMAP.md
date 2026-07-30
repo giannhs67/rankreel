@@ -7,15 +7,17 @@ detailed status and `memory/DECISIONS.md` for why non-obvious calls were made.
 - [x] Next.js app, repo layout, `.gitignore`, `.env.example`.
 - [x] Supabase migrations (tables + RLS), `clips`/`renders`/`fonts` bucket setup in SQL.
 - [x] Create CLAUDE.md, ROADMAP.md, memory/STATE.md, memory/DECISIONS.md.
-- [ ] Create the actual Supabase project and run the migration against it.
-- [ ] Deploy the empty app to Vercel; wire Supabase env vars in Vercel.
+- [x] Local Supabase project running (`supabase start`, Docker), migration applied against it.
+- [ ] Deploy the app to Vercel + a **hosted** (not local) Supabase project; wire env vars in Vercel.
 
 **M1 — Auth (functional)**
 - [x] Supabase Auth email+password, `create-owner` / `reset-password` scripts (service-role key).
 - [x] `@supabase/ssr` session, `proxy.ts` guards (see CLAUDE.md — replaces `middleware.ts` in Next 16),
       /login, /logout.
-- [ ] Owner runs `create-owner` and disables public signups on their own Supabase project (manual,
-      documented in README — can't be verified until a real project exists).
+- [x] Verified end-to-end with Playwright against the local Supabase instance: logged-out redirect,
+      login, signed-in state, sign-out all pass with no console errors.
+- [ ] Disable public signups on the **hosted** Supabase project once one exists (local dev instance
+      doesn't need this — there's no public internet access to it).
 
 **M2 — Upload & project**
 - [ ] Upload clips to Supabase Storage. Create project, list clips, reorder, set title+number.

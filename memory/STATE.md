@@ -1,45 +1,46 @@
 ## Current status
 
-M0 + M1 are code-complete locally. Next.js 16 app with a full auth loop: `proxy.ts` guards every route
-except `/login`, `/login` signs in via a Server Action against Supabase Auth, `/` shows the signed-in
-owner's email with a working sign-out form, and `scripts/create-owner.mjs` /
-`scripts/reset-password.mjs` manage the single owner account via the service-role key. None of this
-has been exercised against a **real** Supabase project yet — there isn't one wired up. Verified so far:
-`npm run build`, `npm run dev`, and `npm run lint` all succeed, and hitting `/` or `/login` without
-real Supabase env vars fails with Supabase's own clear "URL and Key are required" error (expected —
-proves the wiring is correct, not that auth actually works yet).
+M0 and M1 are done and **verified against a real (local) Supabase instance** — not just code-complete.
+Local Supabase runs via Docker (`supabase start`, project_id `rankreel`); `.env.local` points at it.
+Auth works end-to-end: `proxy.ts` redirects logged-out requests to `/login`, login via Server Action
+works, the home page shows the signed-in owner, sign-out works. Verified with a scripted Playwright
+run (screenshots + console-error check), not just `curl`/build checks. Now starting M2 (upload &
+projects).
 
 ## Last session (2026-07-31)
 
 - Did:
-  - M0 (previous session): scaffolded Next.js 16, repo layout, Supabase migration, memory files.
-  - M1 (this session): added `@supabase/supabase-js` + `@supabase/ssr`; wrote
-    `lib/supabase/{server,client,proxy}.ts`; wrote root `proxy.ts` (Next 16's replacement for
-    `middleware.ts`) which redirects unauthenticated requests to `/login` and authenticated ones away
-    from it; built `/login` (Server Action + `useActionState` form) and `/logout` (POST Route
-    Handler); rewrote the placeholder homepage to show the signed-in user + a real sign-out form;
-    wrote `scripts/create-owner.mjs` and `scripts/reset-password.mjs` (both use
-    `auth.admin.*` with the service-role key, take email/password as CLI args or
-    `OWNER_EMAIL`/`OWNER_PASSWORD` env vars); wired both into `package.json` via
-    `node --env-file=.env.local`; updated README/CONTRIBUTING with the exact self-hosting steps
-    (create project → migrate → create-owner → disable signups → dev/deploy).
+  - Ran `supabase init` + `supabase start` in `rankreel/` — local Docker stack (Postgres, Auth,
+    Storage, Studio, etc.) is up, project_id `rankreel`. `0001_init.sql` applied automatically on
+    start.
+  - Filled `.env.local` with the local stack's URL + anon/service-role JWTs (Supabase's well-known
+    local dev demo keys — same on every machine, not secrets). Local endpoints: API
+    `http://127.0.0.1:54321`, Studio `http://127.0.0.1:54323`, DB `postgresql://postgres:postgres@127.0.0.1:54322/postgres`.
+  - Ran `npm run create-owner` → created `owner@rankreel.local` / `dev-owner-password-change-me`
+    (**local dev credentials only** — change via `npm run reset-password` before this ever points at
+    a real/hosted project).
+  - Verified the full auth loop with a one-off Playwright script (chromium, headless): logged-out `/`
+    redirects to `/login`; login succeeds and lands on `/`; home page shows
+    "Signed in as owner@rankreel.local"; sign-out redirects back to `/login`. No console errors.
+    Screenshots confirm the UI actually renders (not just correct HTTP codes).
+  - Note: curl can't drive this login form — it's a React Server Action, which requires the
+    browser's `Next-Action` invocation protocol, not a plain form POST. Use a real browser (or
+    Playwright) to test anything past this point that involves a Server Action form.
 - Decisions: see `memory/DECISIONS.md`.
 - Broke / known issues:
-  - Still no real Supabase project — auth is wired but functionally untested end-to-end. Whoever
-    picks this up next should create one, fill `.env.local`, run the migration, run `create-owner`,
-    and click through `/login` → `/` → sign out once for real before trusting this milestone fully.
-  - Not deployed to Vercel yet.
+  - Still no *hosted* Supabase project or Vercel deployment — everything so far is local-only.
+  - The owner password above is a placeholder committed nowhere but worth rotating once this stops
+    being purely local.
 
 ## Next up (in priority order)
 
-1. Owner creates a Supabase project, fills `.env.local`, runs `supabase/migrations/0001_init.sql`,
-   runs `npm run create-owner`, disables public signups, and does one real login/logout pass locally.
-2. Deploy to Vercel with the same env vars (closes out the last M0 checkbox).
-3. Start M2 — Upload & project: upload clips to Supabase Storage, create project, list/reorder clips,
-   set title + number per clip.
+1. M2 — Upload & project: create project, upload clips to the `clips` Storage bucket, list/reorder
+   clips, edit title + number per clip.
+2. Eventually: hosted Supabase project + Vercel deploy to close the last M0 checkbox (not blocking
+   M2+ local development).
 
 ## Open questions for the owner
 
 - Remotion Lambda (AWS) vs. a self-hosted render worker (Railway/Render/Fly) for M5 — spec recommends
   Lambda, confirm before wiring AWS credentials.
-- Any preference on Supabase project region / naming before it's created?
+- When you're ready to deploy for real: hosted Supabase project region/naming preference?
