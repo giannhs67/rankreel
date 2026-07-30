@@ -68,3 +68,28 @@ One line per non-obvious choice, with the reason. Newest at the bottom.
   service-role key — RLS still applies). Long enough for a preview session, short enough that a
   leaked URL isn't a standing liability. No caching/reuse of signed URLs across requests — simplicity
   over a marginal API-call savings.
+- **2026-07-31** — M4's text editor styles **one shared text block** for the whole ranking list
+  (font/size/colors/stroke/position/animation apply uniformly to every row), not independent
+  per-row or per-word/phrase styling. `ClaudePrompt.md` §1 says "color per word/phrase" — read
+  literally that's richer than what's built. Scoped down because per-word styling would mean a much
+  bigger data model (a layer per word, not one per template) for a payoff that doesn't show up until
+  someone actually wants two differently-colored words in the same row. Revisit if that's requested;
+  the `config_json` shape can grow into an array of styled layers without breaking what exists.
+- **2026-07-31** — `templates` rows are created lazily, one per project, the first time its editor is
+  opened (not upfront in M2, not shared across projects yet). This means M6 ("save current look as a
+  template; apply template to a new project") still needs real work — right now every project
+  quietly gets its own private template row via `projects.template_id`, there's no "template library"
+  UI. The data model already supports reuse (any project could point its `template_id` at another
+  project's template row); only the UI for browsing/applying one doesn't exist yet.
+- **2026-07-31** — `useLoadFont` returns an incrementing counter, not a boolean "ready" flag. A
+  boolean that's already `true` and gets set to `true` again is a no-op in React (bails out, doesn't
+  re-render) — which would silently break the Konva canvas's redraw-on-font-load trigger the second
+  time a font finishes loading (e.g. switching between two Google Fonts). A monotonically increasing
+  value always differs, so the redraw effect always fires. Also sidesteps an
+  `react-hooks/set-state-in-effect` lint error from resetting state synchronously at the top of the
+  effect — the counter is only ever set from inside the async load's completion, which is the
+  legitimate "respond to an external system" case the rule allows.
+- **2026-07-31** — Custom font upload path stores the Storage **path** in `config_json`
+  (`font.customFontPath`), never a signed URL. Signed URLs expire; a path doesn't. Every page that
+  needs to actually render the font (editor, preview) mints a fresh signed URL server-side at load
+  time from that stored path — same pattern already used for clip video URLs.

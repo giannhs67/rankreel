@@ -3,12 +3,14 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/app-header";
 import type { RankingClip } from "@/remotion/RankingList";
+import { resolveRankingConfig } from "@/remotion/ranking-config";
 import { RankingPreviewPlayer } from "./ranking-preview-player";
 
-// Clips have no probed duration yet (that lands with real trimming in M4) — this is a
-// placeholder length per clip for the preview, used only when trim_start/trim_end aren't set.
+// Clips have no probed duration yet (real trimming is still a TODO) — this is a placeholder
+// length per clip for the preview, used only when trim_start/trim_end aren't set.
 const DEFAULT_CLIP_SECONDS = 4;
 const SIGNED_URL_TTL_SECONDS = 60 * 30;
+const CUSTOM_FONT_URL_TTL_SECONDS = 60 * 60;
 
 export default async function ProjectPreviewPage({
   params,
@@ -25,11 +27,29 @@ export default async function ProjectPreviewPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("id, name")
+    .select("id, name, template_id")
     .eq("id", id)
     .single();
 
   if (!project) notFound();
+
+  let templateConfig = resolveRankingConfig(null);
+  if (project.template_id) {
+    const { data: template } = await supabase
+      .from("templates")
+      .select("config_json")
+      .eq("id", project.template_id)
+      .single();
+    if (template) templateConfig = resolveRankingConfig(template.config_json);
+  }
+
+  let customFontUrl: string | null = null;
+  if (templateConfig.font.source === "custom" && templateConfig.font.customFontPath) {
+    const { data: signed } = await supabase.storage
+      .from("fonts")
+      .createSignedUrl(templateConfig.font.customFontPath, CUSTOM_FONT_URL_TTL_SECONDS);
+    customFontUrl = signed?.signedUrl ?? null;
+  }
 
   const { data: clips } = await supabase
     .from("clips")
@@ -77,7 +97,12 @@ export default async function ProjectPreviewPage({
             Add at least one clip before previewing.
           </p>
         ) : (
-          <RankingPreviewPlayer projectName={project.name} clips={rankingClips} />
+          <RankingPreviewPlayer
+            projectName={project.name}
+            clips={rankingClips}
+            config={templateConfig}
+            customFontUrl={customFontUrl}
+          />
         )}
       </main>
     </div>

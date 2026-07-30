@@ -39,9 +39,20 @@ detailed status and `memory/DECISIONS.md` for why non-obvious calls were made.
       (nothing sets them yet — that's real trimming UI, deferred to M4's editor work).
 
 **M4 — Text editor (Konva)**
-- [ ] Move/place text layers, color per phrase, stroke/outline, font size. Persist to config_json.
-- [ ] Import custom font (upload → Storage → FontFace) + Google Fonts picker.
-- [ ] Entrance animation per layer: pop / slide / fade (maps to Remotion interpolate).
+- [x] Drag-to-position ranking-list text block (Konva `<Stage>`, scaled-down WYSIWYG canvas), base +
+      current-item color, stroke color/width, font size. Persisted to `templates.config_json`.
+- [x] Custom font import (upload → `fonts` Storage bucket → FontFace API) + a curated Google Fonts
+      picker (8 fonts, loaded dynamically via a Google Fonts stylesheet link).
+- [x] Entrance animation per row: none / fade / slide / pop, real Remotion `interpolate`/`spring`
+      driven off frames-since-revealed — configurable, applies to every row as each is revealed.
+- [x] Verified end-to-end with Playwright: dragged the text block, changed font/size/colors/
+      animation, uploaded a real custom `.ttf`, saved, then confirmed via a direct Postgres query
+      that `config_json` persisted the exact dragged position and every style field, and confirmed
+      in the preview DOM that the row actually renders with the custom font-family applied.
+- [ ] Per-clip trimming (`trim_start`/`trim_end`) — still not wired to any UI; preview duration stays
+      a 4s placeholder. Explicitly deferred (not part of this pass — see DECISIONS.md).
+- [ ] Text styling is one shared block for the whole ranking list (not independently
+      positionable/colorable per row or per word/phrase) — a deliberate scope cut, see DECISIONS.md.
 
 **M5 — Render one MP4 (Remotion Lambda)**
 - [ ] `deploy-lambda`; app enqueues job → Lambda renders → MP4 to `renders` bucket; jobs row updated.

@@ -1,4 +1,5 @@
-import { AbsoluteFill, Series, Video, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Series, Video, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { DEFAULT_RANKING_CONFIG, type RankingListConfig } from "./ranking-config";
 
 export type RankingClip = {
   id: string;
@@ -11,6 +12,7 @@ export type RankingClip = {
 export type RankingListProps = {
   projectName: string;
   clips: RankingClip[];
+  config: RankingListConfig;
 };
 
 const FPS = 30;
@@ -31,25 +33,70 @@ export function getRankingListMetadata(props: RankingListProps) {
   return { fps: FPS, width: WIDTH, height: HEIGHT, durationInFrames };
 }
 
-export function RankingList({ clips }: RankingListProps) {
+function entranceStyle(
+  animation: RankingListConfig["animation"],
+  framesSinceReveal: number,
+  fps: number,
+): React.CSSProperties {
+  if (framesSinceReveal < 0) return { opacity: 0 };
+
+  const { type, durationInFrames } = animation;
+
+  if (type === "none") {
+    return { opacity: 1 };
+  }
+
+  if (type === "fade") {
+    const opacity = interpolate(framesSinceReveal, [0, durationInFrames], [0, 1], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    });
+    return { opacity };
+  }
+
+  if (type === "slide") {
+    const opacity = interpolate(framesSinceReveal, [0, durationInFrames], [0, 1], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    });
+    const translateY = interpolate(framesSinceReveal, [0, durationInFrames], [40, 0], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    });
+    return { opacity, transform: `translateY(${translateY}px)` };
+  }
+
+  // pop
+  const scale = spring({
+    frame: framesSinceReveal,
+    fps,
+    config: { damping: 10, stiffness: 180 },
+    durationInFrames,
+  });
+  const opacity = interpolate(framesSinceReveal, [0, Math.min(durationInFrames, 8)], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  return { opacity, transform: `scale(${scale})` };
+}
+
+export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG }: RankingListProps) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
   // clips are ordered #N (highest/first-added) -> #1 (lowest/last-added), matching playback order.
+  const startFrames: number[] = [];
   let cursor = 0;
+  for (let i = 0; i < clips.length; i++) {
+    startFrames.push(cursor);
+    cursor += clipFrames(clips[i], fps);
+  }
   let currentIndex = 0;
   for (let i = 0; i < clips.length; i++) {
-    const duration = clipFrames(clips[i], fps);
-    if (frame < cursor + duration) {
-      currentIndex = i;
-      break;
-    }
-    cursor += duration;
-    currentIndex = i;
+    if (frame >= startFrames[i]) currentIndex = i;
   }
 
   const current = clips[currentIndex];
-  const revealedIds = new Set(clips.slice(0, currentIndex + 1).map((c) => c.id));
 
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
@@ -72,38 +119,48 @@ export function RankingList({ clips }: RankingListProps) {
         )}
         <AbsoluteFill
           style={{
-            padding: 56,
-            justifyContent: "center",
-            gap: 20,
-            fontFamily: "sans-serif",
+            padding: 0,
+            fontFamily: `"${config.font.family}", sans-serif`,
           }}
         >
-          {clips.map((clip) => {
-            const isRevealed = revealedIds.has(clip.id);
-            const isCurrent = current?.id === clip.id;
-            return (
-              <div
-                key={clip.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 20,
-                  opacity: isRevealed ? 1 : 0,
-                  transform: isRevealed ? "translateY(0)" : "translateY(24px)",
-                  transition: "opacity 0.2s, transform 0.2s",
-                  fontSize: isCurrent ? 58 : 46,
-                  fontWeight: 800,
-                  color: "white",
-                  textShadow: "0 2px 16px rgba(0,0,0,0.85)",
-                }}
-              >
-                <span style={{ color: isCurrent ? "#facc15" : "white" }}>
-                  #{clip.number ?? "–"}
-                </span>
-                <span>{clip.title}</span>
-              </div>
-            );
-          })}
+          <div
+            style={{
+              position: "absolute",
+              left: config.position.x,
+              top: config.position.y,
+              display: "flex",
+              flexDirection: "column",
+              gap: 20,
+            }}
+          >
+            {clips.map((clip, i) => {
+              const isCurrent = i === currentIndex;
+              const framesSinceReveal = frame - startFrames[i];
+              const style = entranceStyle(config.animation, framesSinceReveal, fps);
+              return (
+                <div
+                  key={clip.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 20,
+                    fontSize: isCurrent ? config.text.fontSize * 1.25 : config.text.fontSize,
+                    fontWeight: 800,
+                    color: isCurrent ? config.text.currentColor : config.text.baseColor,
+                    WebkitTextStroke:
+                      config.text.strokeWidth > 0
+                        ? `${config.text.strokeWidth}px ${config.text.strokeColor}`
+                        : undefined,
+                    textShadow: "0 2px 16px rgba(0,0,0,0.85)",
+                    ...style,
+                  }}
+                >
+                  <span>#{clip.number ?? "–"}</span>
+                  <span>{clip.title}</span>
+                </div>
+              );
+            })}
+          </div>
         </AbsoluteFill>
       </AbsoluteFill>
 

@@ -2,9 +2,15 @@
 
 import { Player } from "@remotion/player";
 import { RankingList, getRankingListMetadata, type RankingListProps } from "@/remotion/RankingList";
+import { useLoadFont } from "@/lib/use-load-font";
 
-export function RankingPreviewPlayer(props: RankingListProps) {
-  const { fps, durationInFrames, width, height } = getRankingListMetadata(props);
+export function RankingPreviewPlayer(props: RankingListProps & { customFontUrl: string | null }) {
+  const { customFontUrl, ...playerProps } = props;
+  const { fps, durationInFrames, width, height } = getRankingListMetadata(playerProps);
+
+  // Ensures the Google/custom font is actually loaded in the browser before the Player
+  // (which renders with real DOM/canvas, not headless Chrome) draws text with it.
+  useLoadFont(props.config, customFontUrl);
 
   return (
     <div
@@ -13,7 +19,7 @@ export function RankingPreviewPlayer(props: RankingListProps) {
     >
       <Player
         component={RankingList}
-        inputProps={props}
+        inputProps={playerProps}
         durationInFrames={durationInFrames}
         fps={fps}
         compositionWidth={width}
