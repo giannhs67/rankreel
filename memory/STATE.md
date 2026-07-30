@@ -1,105 +1,74 @@
 ## Current status
 
-M0–M4, M6, and now M5 (local variant) and M8 are done and verified against a real local Supabase
-instance (Docker, `supabase start`). RankReel can now go from "upload a clip" all the way to "download
-a real MP4" for all three composition formats:
+M0–M8 are all done (M9/M10 remain) and verified against a real local Supabase instance (Docker,
+`supabase start`). RankReel can now go from "upload a clip" all the way to "download a real MP4," for
+all three composition formats, one at a time or in a batch:
 
 - **Ranking List** (M3/M4/M6): blurred backdrop, progressive numbered list, letterboxed clip, Konva
   drag-to-position editor, templates you can save and reuse across projects.
 - **Title Banner** (M8): full-bleed clip with a single positioned title line.
 - **Caption** (M8): full-bleed clip with a pill-style caption. Per-clip granularity, not true
   word-by-word — see DECISIONS.md.
+- **Rendering** (M5, local — no AWS) and **batch rendering** (M7, `/batch`) both work, verified with
+  real files, `ffprobe`, and extracted frames, not just "the UI didn't crash."
 
-Every project now declares its `format` at creation time. Rendering (M5) happens **locally** (no AWS
-— the owner doesn't have an account), via `@remotion/renderer` in-process, writing real MP4s to
-`renders/` on disk. Verified with `ffprobe` and an extracted frame that output is genuinely correct,
-not just "didn't crash."
+Every project declares its `format` at creation. Renders are serialized through an in-process queue
+and share one long-lived headless Chromium instance (see below — this was a real bug, now fixed).
 
 Not yet built: real cloud/Lambda rendering (open until there's an AWS account or a deploy target),
-M7 batch rendering, M9 URL ingestion, M10 polish. Per-clip trimming now captures real duration on
-upload (no more universal 4s placeholder) and is editable via numeric inputs.
+M9 URL ingestion, M10 polish.
 
-## Last session (2026-07-31, continued — long session, M5 local + M8)
+## Last session (2026-07-31, continued — long session: M5 local, M8, M7)
 
-- Did (M5, local render):
-  - Installed `@remotion/renderer` + `@remotion/bundler`. Had to add
-    `serverExternalPackages: ["@remotion/renderer", "@remotion/bundler"]` to `next.config.ts` —
-    Turbopack otherwise tries to statically bundle their platform-specific native compositor
-    binaries and fails (tries to resolve every OS/arch package, most not installed).
-  - `worker/render.ts`: bundles the Remotion project once per server process (cached), then
-    `renderCompositionLocally({compositionId, projectId, jobId, inputProps})` renders any of the
-    three compositions to `renders/<projectId>/<jobId>.mp4`.
-  - `POST /api/render`: creates a `jobs` row, kicks off rendering **without awaiting** (safe because
-    this Next server is a persistent local Node process, not Vercel), returns the job id immediately.
-  - `GET /api/renders/[jobId]`: auth + ownership + status checks, then streams the file from disk.
-  - Real clip duration capture: `clip-upload-form.tsx` reads a hidden `<video>` element's
-    `.duration` before upload, `addClip` stores `trim_start=0`/`trim_end=duration`. `ClipRow`'s edit
-    form now has numeric trim_start/trim_end inputs. This mostly retires the old 4s placeholder.
-  - `lib/ranking-render-data.ts` refactored to share `getSignedClipsForProject` /
-    `getCustomFontSignedUrl` (new `lib/clip-signing.ts`) — behavior-identical, verified by the same
-    render/preview tests passing before and after.
-  - **Found and fixed a real infra issue**: Supabase Realtime (`postgres_changes`) does not reliably
-    deliver events in this local self-hosted setup — verified broken even subscribing with the
-    service-role key (no RLS/auth involved) during an actively-updating job. Rather than debug
-    Elixir/Docker internals, switched the render-progress UI to 2-second polling. Simple, reliable,
-    appropriate for a single-owner tool. `jobs` stays in the Realtime publication for whenever this
-    gets revisited, but nothing currently depends on it working.
-  - Verified thoroughly: rendered a real ~22s clip, confirmed via `ffprobe` the output is genuine
-    H.264/AAC MP4 at 1080×1920/30fps with correct duration, and visually via an extracted frame that
-    the composition rendered correctly (blurred backdrop, ranking text, letterboxed clip, original
-    audio preserved). Also drove it through the actual browser UI end-to-end (click render → job
-    appears → progress advances → download → valid file).
-- Did (M8, two new formats):
-  - Added `projects.format` column (migration `0002_project_format.sql`, default `'ranking_list'`,
-    same check constraint values as `templates.format`). Project creation form now has a format
-    picker.
-  - Extracted `remotion/clip-timing.ts` (clip sequencing/current-index math) and
-    `remotion/entrance-style.ts` (the fade/slide/pop animation logic) out of `RankingList.tsx` — pure,
-    behavior-preserving refactor, reused by the two new compositions. Regression-tested afterward.
-  - `remotion/TitleBanner.tsx` + `title-banner-config.ts`, `remotion/Caption.tsx` +
-    `caption-config.ts`: new compositions, each with their own config shape/defaults/resolver
-    (font/text/position/animation — similar shape to Ranking List's but not code-shared beyond the
-    animation/timing helpers, to avoid risking the already-verified Ranking List config).
-  - `lib/title-banner-render-data.ts`, `lib/caption-render-data.ts`: same pattern as
-    `ranking-render-data.ts`, built on the shared `clip-signing.ts` helpers.
-  - Editor and preview pages now branch on `project.format`. Ranking List's branch is untouched
-    logic (same components, same behavior) — new formats get `simple-style-editor.tsx` (numeric X/Y
-    instead of a Konva canvas — scope cut, see DECISIONS.md) and dedicated
-    `title-banner-preview-player.tsx` / `caption-preview-player.tsx`.
-  - Hit and fixed a real RSC bug: an early version of the preview page imported the Remotion
-    composition components directly into the Server Component and passed them as a `component` prop
-    to a client wrapper — this breaks (`React.createContext is undefined`) because component
-    references and hook-using modules can't cross the Server→Client boundary as props like that. Fix:
-    each format gets its own dedicated "use client" player file that imports its own composition
-    internally, mirroring the pattern `ranking-preview-player.tsx` already used successfully — the
-    server page only ever passes plain serializable data.
-  - `updateTemplateConfig`'s type widened to accept any of the three config shapes (DB column is
-    just `jsonb`; the action doesn't care) so `SimpleStyleEditor` could reuse it.
-  - Verified with Playwright: full create → upload → style → save → preview cycle for both new
-    formats, confirming the styled text (custom color) actually shows during real playback, **plus**
-    a full ranking_list regression pass to confirm the shared-code refactor (clip-timing,
-    entrance-style, RankingList.tsx changes) didn't break the original, already-verified format.
-- Decisions: see `memory/DECISIONS.md` (several new entries this session — local rendering choice,
-  polling over Realtime, RSC component-as-prop gotcha, scope cuts on the new formats' editors).
-- Broke / known issues: none currently known to be broken. Known gaps: no save/apply template
-  library for title_banner/caption yet; Caption is per-clip not per-word; no cloud rendering path.
+This picks up right after M6. Summary of the M5(local)+M8 combined commit is already covered in the
+prior STATE.md revision (now folded into ROADMAP.md's per-milestone detail); this entry covers M7 and
+the bug it surfaced.
+
+- Did (M7, batch rendering):
+  - `/batch`: lists every project (name, format, clip count) with checkboxes, a "Render N selected"
+    button that calls the existing `/api/render` once per selected project (no new render logic
+    needed), and a live dashboard of the last 30 jobs across *all* projects (project name via a
+    Supabase embedded join, status, progress bar, download link) — same 2s-polling pattern as the
+    per-project render panel.
+  - Added a render queue (`renderQueue`, a module-level `Promise` chain in
+    `app/api/render/route.ts`) so batch-triggered renders don't run concurrently — each POST still
+    creates its `jobs` row immediately (shows `queued`), but actual render work waits its turn.
+  - **Found and fixed a real bug via this milestone's own testing**: the first 2-job batch render
+    left 12 orphaned `chrome-headless-shell` processes and the second job failed with a Puppeteer
+    "Session closed" error. Root cause: `worker/render.ts` let `selectComposition`/`renderMedia`
+    each spin up their own Chromium instance (default behavior without `puppeteerInstance`). Fixed
+    by lazily opening one `openBrowser("chrome")` instance and reusing it for every render in the
+    process's lifetime — same pattern already used for caching the Remotion bundle. Re-verified: the
+    identical 2-job batch then completed successfully, with the process tree staying to one coherent
+    Chromium instance instead of accumulating (checked via `ps -eo pid,ppid,comm`).
+  - Verified end-to-end: created 2 projects with clips, selected both on `/batch`, rendered, watched
+    via direct DB polling that job 2 genuinely waited at `queued` while job 1 rendered (queue proof),
+    confirmed both reached `done`, and validated both output files with `ffprobe` (correct duration,
+    size, valid H.264/AAC MP4s).
+- Decisions this session: see `memory/DECISIONS.md` — M7's "batch" interpretation (existing-project
+  bulk-render, not literal JSON clip import), the render queue, and the Chromium-reuse bug/fix are
+  the three new entries from this part of the session.
+- Broke / known issues: none currently known. The Chromium-reuse fix should also make any *sequence*
+  of renders in one session more reliable, not just batches — worth keeping in mind if a future
+  session sees odd render failures after several renders in a row (check `ps aux | grep
+  chrome-headless-shell` first).
 
 ## Next up (in priority order)
 
-1. M7 — Batch: render multiple projects/jobs unattended with a progress dashboard. The exact
-   "paste a JSON array" framing in ClaudePrompt.md doesn't map cleanly onto real video files (they
-   need actual upload, not JSON) — likely interpretation is bulk-selecting existing projects to
-   render together. Confirm scope before building if picked up.
-2. Real cloud rendering path (Lambda or a hosted self-run worker) once there's an AWS account and/or
+1. Real cloud rendering path (Lambda or a hosted self-run worker) once there's an AWS account and/or
    an actual deployment target — not blocking further local feature work.
-3. M9 (URL ingestion, optional/off-by-default) and M10 (polish) remain unstarted.
-4. Eventually: hosted Supabase project + Vercel deploy.
+2. M9 (URL ingestion, optional/off-by-default) and M10 (polish) remain unstarted.
+3. Smaller open items noted along the way: no save/apply template library for Title Banner/Caption;
+   Caption is per-clip not per-word; Title Banner/Caption editors use numeric position instead of a
+   Konva drag canvas.
+4. Eventually: hosted Supabase project + Vercel deploy. Note M5's local rendering + fire-and-forget
+   Route Handler approach explicitly won't work unmodified on Vercel — flagged in DECISIONS.md.
 
 ## Open questions for the owner
 
 - M5 now renders locally to disk rather than via AWS Lambda — confirm this is the right long-term
-  direction, or whether cloud rendering should be revisited later (e.g. once deploying for real,
-  local-disk rendering won't work the same way on Vercel — would need a real worker process then).
-- Is the M7 "batch" interpretation above (bulk-render existing projects) right, or did you have
-  something else in mind (e.g. bulk clip import via JSON referencing already-uploaded files)?
+  direction, or whether cloud rendering should be revisited later (local-disk rendering won't work
+  the same way on Vercel — would need a real separate worker process then).
+- M7 "batch" was interpreted as bulk-rendering existing projects (see DECISIONS.md) — confirm that's
+  what was wanted, versus e.g. bulk clip import via JSON referencing already-uploaded files.
 - When ready to deploy for real: hosted Supabase project region/naming preference?

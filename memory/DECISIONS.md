@@ -160,3 +160,28 @@ One line per non-obvious choice, with the reason. Newest at the bottom.
   which needs either an ASR/transcription integration or a manual per-word timing editor — neither
   exists. Building either was out of scope for this pass; the composition and data model don't
   preclude adding real word timing later (would mean richer per-clip caption data than just `title`).
+- **2026-07-31** — Interpreted M7 "Batch" as bulk-rendering multiple *existing* projects, not
+  ClaudePrompt.md's literal "paste/import a JSON array of {clip, title, number}." A pasted JSON array
+  can't reference real video files without an actual upload step, so a literal reading doesn't map
+  onto how clips actually get into the system. Bulk-render-existing-projects is the closest workable
+  reading of "render them all to MP4 unattended" + "progress dashboard." Flagged as an assumption in
+  STATE.md's open questions in case the owner meant something else (e.g. bulk clip import via JSON
+  referencing already-uploaded storage paths).
+- **2026-07-31** — Added a render queue (module-level `Promise` chain in
+  `app/api/render/route.ts`) once batch rendering made concurrent renders a real possibility. Local
+  rendering means headless Chromium + ffmpeg on the same machine as everything else — running several
+  at once would slow all of them down and risks resource exhaustion. Jobs still get created and show
+  `queued` immediately when a batch is kicked off; only the actual render work is serialized. Verified
+  by watching two real jobs via direct DB polling: job 2 genuinely stayed at `queued`/progress 0 while
+  job 1 was `rendering`, only starting once job 1 finished.
+- **2026-07-31** — Found and fixed a real bug via the first batch-render test: `worker/render.ts`
+  was letting `selectComposition`/`renderMedia` each open their own Chromium instance (the default
+  when you don't pass `puppeteerInstance`). A 2-job batch left **12 orphaned
+  `chrome-headless-shell` processes** (`ps aux` after the run) and the second job failed outright
+  with `Error: Protocol error (Page.bringToFront): Session closed`. Fixed by opening one
+  `openBrowser("chrome")` instance lazily and reusing it (via `puppeteerInstance`) across every
+  render for the life of the server process — same caching pattern already used for the Remotion
+  bundle. Re-ran the identical 2-job batch afterward: both jobs completed successfully, and the
+  process tree stayed to one coherent Chromium instance (confirmed via `ps -eo pid,ppid,comm` —
+  all one parent, not several scattered trees) instead of accumulating. This would have eventually
+  broken any multi-render session, not just batches; good that M7 surfaced it.

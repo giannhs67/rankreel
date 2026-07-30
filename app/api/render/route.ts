@@ -13,6 +13,12 @@ const COMPOSITION_ID: Record<CompositionFormat, "RankingList" | "TitleBanner" | 
   caption: "Caption",
 };
 
+// Local rendering means headless Chromium + ffmpeg competing for the same CPU/GPU as everything
+// else on this machine — running several at once (e.g. a batch render) would make all of them
+// slower and risks starving the dev server itself. This chain serializes actual render work
+// (jobs still get created and show "queued" immediately; each just waits its turn).
+let renderQueue: Promise<void> = Promise.resolve();
+
 async function getRenderPropsForFormat(
   supabase: Awaited<ReturnType<typeof createClient>>,
   format: CompositionFormat,
@@ -72,10 +78,13 @@ export async function POST(request: Request) {
   // Vercel serverless function, which is why heavy rendering is safe to run in-process here at
   // all — see ClaudePrompt.md's "never run heavy renders on Vercel functions" guardrail). The
   // response returns immediately; the client polls `jobs` for progress (see memory/DECISIONS.md
-  // for why polling instead of Supabase Realtime).
-  runRender(format, projectId, job.id, renderProps).catch((err) => {
-    console.error(`[render] job ${job.id} failed:`, err);
-  });
+  // for why polling instead of Supabase Realtime). Actual render work is serialized via
+  // renderQueue, not run concurrently, even if several POSTs land close together (batch renders).
+  renderQueue = renderQueue.then(() =>
+    runRender(format, projectId, job.id, renderProps).catch((err) => {
+      console.error(`[render] job ${job.id} failed:`, err);
+    }),
+  );
 
   return NextResponse.json({ jobId: job.id });
 }

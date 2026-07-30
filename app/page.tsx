@@ -29,7 +29,15 @@ export default async function Home() {
         </section>
 
         <section>
-          <h2 className="mb-4 text-lg font-semibold">Projects</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Projects</h2>
+            <Link
+              href="/batch"
+              className="text-sm text-black/50 hover:underline dark:text-white/50"
+            >
+              Batch render →
+            </Link>
+          </div>
           {!projects?.length && (
             <p className="text-sm text-black/50 dark:text-white/50">
               No projects yet — create one above.
