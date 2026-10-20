@@ -57,6 +57,9 @@ export async function POST(request: Request) {
 
   const format = project.format as CompositionFormat;
   const studioSettings = parseStudioSettings(body?.studioSettings);
+  if (body?.studioSettings != null && !studioSettings) {
+    return NextResponse.json({ error: "Invalid studio settings" }, { status: 400 });
+  }
   const renderProps = await getRenderPropsForFormat(supabase, format, projectId);
   if (!renderProps) {
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
