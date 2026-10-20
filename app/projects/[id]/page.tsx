@@ -79,7 +79,7 @@ export default async function ProjectPage({
               </div>
               <span className="rounded-lg bg-amber-400 px-3 py-1 text-xs font-bold text-black">RANKING</span>
             </div>
-            <StudioControls projectId={project.id} />
+            <StudioControls projectId={project.id} ranking />
           </section>
         ) : (
           <section className="space-y-3">
