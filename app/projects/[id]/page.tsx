@@ -69,11 +69,32 @@ export default async function ProjectPage({
           </div>
         </div>
 
-        <StudioControls projectId={project.id} />
+        {project.format === "ranking_list" ? (
+          <section className="space-y-3 rounded-2xl border border-amber-400/30 bg-amber-400/5 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-amber-500">Dedicated workspace</p>
+                <h2 className="text-xl font-bold">Ranking Studio</h2>
+                <p className="text-sm text-black/60 dark:text-white/60">Numbered clips, countdown layout, ranking effects and preview.</p>
+              </div>
+              <span className="rounded-lg bg-amber-400 px-3 py-1 text-xs font-bold text-black">TOP 6</span>
+            </div>
+            <StudioControls projectId={project.id} />
+          </section>
+        ) : (
+          <section className="space-y-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-amber-500">General workspace</p>
+              <h2 className="text-xl font-bold">Video Editor</h2>
+              <p className="text-sm text-black/60 dark:text-white/60">Build your story or edit your footage scene by scene.</p>
+            </div>
+            <StudioControls projectId={project.id} />
+          </section>
+        )}
 
         <section>
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
-            Add a video scene
+            {project.format === "ranking_list" ? "Add a ranking clip" : "Add a video scene"}
           </h2>
           <ClipUploadForm projectId={project.id} nextRankingNumber={project.format === "ranking_list" ? Math.max(1, 6 - (clips?.length ?? 0)) : 0} />
         </section>
