@@ -110,3 +110,47 @@ export async function moveClip(projectId: string, clipId: string, direction: "up
 
   revalidatePath(`/projects/${projectId}`);
 }
+
+
+/** Reorder clips for desktop drag-and-drop and mobile position selection. */
+export async function moveClipToPosition(projectId: string, clipId: string, targetIndex: number) {
+  const { supabase } = await requireUser();
+  if (!Number.isInteger(targetIndex)) throw new Error("Invalid position");
+
+  const { data: clips, error } = await supabase
+    .from("clips")
+    .select("id, order_index")
+    .eq("project_id", projectId)
+    .order("order_index", { ascending: true });
+
+  if (error || !clips) throw new Error(error?.message ?? "Failed to load clips");
+  const currentIndex = clips.findIndex((clip) => clip.id === clipId);
+  if (currentIndex < 0 || targetIndex < 0 || targetIndex >= clips.length) {
+    throw new Error("Clip or target position not found");
+  }
+  if (currentIndex === targetIndex) return;
+
+  const reordered = [...clips];
+  const [moved] = reordered.splice(currentIndex, 1);
+  reordered.splice(targetIndex, 0, moved);
+
+  // Assign temporary distinct indices first, avoiding collisions with current indices.
+  const maxIndex = Math.max(0, ...clips.map((clip) => clip.order_index ?? 0));
+  for (let i = 0; i < reordered.length; i++) {
+    const { error: updateError } = await supabase
+      .from("clips")
+      .update({ order_index: maxIndex + i + 1 })
+      .eq("project_id", projectId)
+      .eq("id", reordered[i].id);
+    if (updateError) throw new Error(updateError.message);
+  }
+  for (let i = 0; i < reordered.length; i++) {
+    const { error: updateError } = await supabase
+      .from("clips")
+      .update({ order_index: i })
+      .eq("project_id", projectId)
+      .eq("id", reordered[i].id);
+    if (updateError) throw new Error(updateError.message);
+  }
+  revalidatePath(`/projects/${projectId}`);
+}
