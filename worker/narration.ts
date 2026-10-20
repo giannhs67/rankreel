@@ -44,11 +44,26 @@ export async function addNarrationToMp4(outputPath: string, settings: StudioRend
     const psFile = path.join(tempDir, "narrate.ps1");
     await fs.writeFile(psFile, ps, "utf8");
     await run("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", psFile, wav, scriptFile, rate]);
-    // Replace the audio stream with narration to avoid failure on silent input clips.
-    // pad the narration with silence if it is shorter than the video.
+    // Mix the original clip audio quietly under narration when an audio stream exists.
+    // Videos without audio still render with narration alone.
+    const hasOriginalAudio = await new Promise<boolean>((resolve, reject) => {
+      const child = spawn("ffprobe", [
+        "-v", "error", "-select_streams", "a:0",
+        "-show_entries", "stream=index", "-of", "csv=p=0", outputPath,
+      ], { windowsHide: true });
+      let stdout = "";
+      child.stdout.on("data", chunk => { stdout += String(chunk); });
+      child.on("error", reject);
+      child.on("close", code => code === 0
+        ? resolve(stdout.trim().length > 0)
+        : reject(new Error("ffprobe failed while checking source audio")));
+    });
+    const filter = hasOriginalAudio
+      ? "[0:a]volume=0.18[original];[1:a]apad[narration];[original][narration]amix=inputs=2:duration=longest:normalize=0[a]"
+      : "[1:a]apad[a]";
     await run("ffmpeg", [
       "-y", "-i", outputPath, "-i", wav,
-      "-filter_complex", "[1:a]apad[a]",
+      "-filter_complex", filter,
       "-map", "0:v:0", "-map", "[a]", "-c:v", "copy", "-c:a", "aac",
       "-shortest", rendered,
     ]);
