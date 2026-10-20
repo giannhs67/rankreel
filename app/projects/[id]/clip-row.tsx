@@ -48,7 +48,7 @@ export function ClipRow({
 
   if (editing) {
     return (
-      <li
+      <div
         data-testid="clip-row"
         data-clip-id={clip.id}
         className="rounded-md border border-black/10 p-3 dark:border-white/10"
@@ -107,12 +107,12 @@ export function ClipRow({
             </button>
           </div>
         </form>
-      </li>
+      </div>
     );
   }
 
   return (
-    <li
+    <div
       data-testid="clip-row"
       data-clip-id={clip.id}
       className="flex flex-col gap-3 rounded-xl border border-black/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"
@@ -165,6 +165,6 @@ export function ClipRow({
         </button>
       </div>
       {actionError && <p role="alert" className="text-xs text-red-600 dark:text-red-400">{actionError}</p>}
-    </li>
+    </div>
   );
 }
