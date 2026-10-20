@@ -29,7 +29,7 @@ export function NewProjectForm() {
           className="rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/15"
         >
           {FORMATS.map((f) => (
-            <option key={f.value} value={f.value}>
+            <option key={f.label} value={f.value}>
               {f.label} — {f.description}
             </option>
           ))}
