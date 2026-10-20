@@ -22,9 +22,11 @@ export default async function Home() {
   return (
     <div className="min-h-screen">
       <AppHeader email={user.email ?? ""} />
-      <main className="mx-auto max-w-2xl space-y-8 p-6">
+      <main className="mx-auto max-w-5xl space-y-8 px-4 py-6 sm:p-8">
         <section>
-          <h1 className="mb-4 text-lg font-semibold">New project</h1>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-black/50 dark:text-white/50">Creator studio</p>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight">Create your next Short</h1>
+          <p className="mb-5 text-sm text-black/60 dark:text-white/60">Build a Top 6 ranking, preview it, then render on your Windows PC.</p>
           <NewProjectForm />
         </section>
 
@@ -43,12 +45,12 @@ export default async function Home() {
               No projects yet — create one above.
             </p>
           )}
-          <ul className="space-y-2">
+          <ul className="grid gap-3 sm:grid-cols-2">
             {projects?.map((project) => (
               <li key={project.id}>
                 <Link
                   href={`/projects/${project.id}`}
-                  className="block rounded-md border border-black/10 px-4 py-3 hover:bg-black/[.03] dark:border-white/10 dark:hover:bg-white/[.03]"
+                  className="block rounded-xl border border-black/10 bg-black/[.02] p-5 font-medium transition hover:bg-black/[.06] dark:border-white/10 dark:bg-white/[.03] dark:hover:bg-white/[.08]"
                 >
                   {project.name}
                 </Link>
