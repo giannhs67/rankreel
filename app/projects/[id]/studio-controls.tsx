@@ -21,29 +21,22 @@ const defaults: StudioSettings = {
 };
 
 export function StudioControls({ projectId }: { projectId: string }) {
-  const [settings, setSettings] = useState<StudioSettings>(defaults);
-  const [saved, setSaved] = useState(false);
+  const [settings, setSettings] = useState<StudioSettings>(() => {
+    if (typeof window === "undefined") return defaults;
+    try {
+      const raw = window.localStorage.getItem(`short-tube-studio-${projectId}`);
+      return raw ? { ...defaults, ...JSON.parse(raw) } : defaults;
+    } catch { return defaults; }
+  });
   const [voicePreviewing, setVoicePreviewing] = useState(false);
-  const [loaded, setLoaded] = useState(false);
   const [history, setHistory] = useState<StudioSettings[]>([]);
   const [future, setFuture] = useState<StudioSettings[]>([]);
   const storageKey = `short-tube-studio-${projectId}`;
 
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(storageKey);
-      if (raw) setSettings({ ...defaults, ...JSON.parse(raw) });
-    } catch { /* Use defaults if storage is unavailable */ }
-    setLoaded(true);
-  }, [storageKey]);
-
-  useEffect(() => {
-    if (!loaded) return;
-    try {
-      window.localStorage.setItem(storageKey, JSON.stringify(settings));
-      setSaved(true);
-    } catch { setSaved(false); }
-  }, [settings, storageKey, loaded]);
+    try { window.localStorage.setItem(storageKey, JSON.stringify(settings)); }
+    catch { /* Storage can be disabled in private browsing */ }
+  }, [settings, storageKey]);
 
   function change(patch: Partial<StudioSettings>) {
     setHistory(previous => [...previous.slice(-19), settings]);
@@ -73,7 +66,7 @@ export function StudioControls({ projectId }: { projectId: string }) {
         <div>
           <h2 className="text-lg font-semibold">Short Tube Studio</h2>
           <p className="text-xs text-black/50 dark:text-white/50">
-            {saved ? "Draft saved on this device" : "Draft not saved"} · Ranking transitions and title overlays apply on MP4 render
+            Draft autosave on this device · Ranking transitions and title overlays apply on MP4 render
           </p>
         </div>
         <div className="flex gap-2">
