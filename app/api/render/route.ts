@@ -1,4 +1,6 @@
 import path from "node:path";
+import { addNarrationToMp4 } from "@/worker/narration";
+import type { StudioRenderSettings } from "@/shared/studio-settings";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getRankingRenderProps } from "@/lib/ranking-render-data";
@@ -99,7 +101,7 @@ async function runRender(
   format: CompositionFormat,
   projectId: string,
   jobId: string,
-  renderProps: { projectName: string; clips: unknown[]; config: unknown; studioSettings?: unknown },
+  renderProps: { projectName: string; clips: unknown[]; config: unknown; studioSettings?: StudioRenderSettings },
 ) {
   const supabase = await createClient();
 
@@ -130,6 +132,10 @@ async function runRender(
           .then(() => {});
       },
     });
+
+    if (format === "ranking_list" && renderProps.studioSettings?.script.trim()) {
+      await addNarrationToMp4(outputLocation, renderProps.studioSettings);
+    }
 
     const relativeOutputPath = path.relative(RENDERS_DIR, outputLocation);
 
