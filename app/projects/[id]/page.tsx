@@ -5,6 +5,7 @@ import { AppHeader } from "@/components/app-header";
 import { ClipUploadForm } from "./clip-upload-form";
 import { SortableClipList } from "./sortable-clip-list";
 import { RenderPanel } from "./render-panel";
+import { StudioControls } from "./studio-controls";
 
 export default async function ProjectPage({
   params,
@@ -67,6 +68,8 @@ export default async function ProjectPage({
             )}
           </div>
         </div>
+
+        <StudioControls projectId={project.id} />
 
         <section>
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
