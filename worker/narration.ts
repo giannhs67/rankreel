@@ -32,15 +32,18 @@ export async function addNarrationToMp4(outputPath: string, settings: StudioRend
     const scriptFile = path.join(tempDir, "script.txt");
     await fs.writeFile(scriptFile, settings.script, "utf8");
     const ps = [
+      "param([string]$wav,[string]$txt,[int]$rate)",
       "Add-Type -AssemblyName System.Speech",
       "$s = New-Object System.Speech.Synthesis.SpeechSynthesizer",
-      "$s.SetOutputToWaveFile($args[0])",
-      "$s.Rate = [int]$args[2]",
-      "$s.Speak([System.IO.File]::ReadAllText($args[1]))",
+      "$s.SetOutputToWaveFile($wav)",
+      "$s.Rate = $rate",
+      "$s.Speak([System.IO.File]::ReadAllText($txt))",
       "$s.Dispose()",
     ].join("; ");
     const rate = settings.voice === "energetic" ? "2" : settings.voice === "deep" ? "-2" : "0";
-    await run("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", ps, wav, scriptFile, rate]);
+    const psFile = path.join(tempDir, "narrate.ps1");
+    await fs.writeFile(psFile, ps, "utf8");
+    await run("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", psFile, wav, scriptFile, rate]);
     // Replace the audio stream with narration to avoid failure on silent input clips.
     // pad the narration with silence if it is shorter than the video.
     await run("ffmpeg", [
