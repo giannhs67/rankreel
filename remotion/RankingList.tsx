@@ -1,4 +1,5 @@
-import { AbsoluteFill, Series, Video, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Series, Video, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
+import type { StudioRenderSettings } from "@/shared/studio-settings";
 import { DEFAULT_RANKING_CONFIG, type RankingListConfig } from "./ranking-config";
 import { clipFramesFor, getClipStartFrames, getCurrentClipIndex, getTotalDurationInFrames } from "./clip-timing";
 import { entranceStyle } from "./entrance-style";
@@ -15,6 +16,7 @@ export type RankingListProps = {
   projectName: string;
   clips: RankingClip[];
   config: RankingListConfig;
+  studioSettings?: StudioRenderSettings;
 };
 
 const FPS = 30;
@@ -32,7 +34,7 @@ export function getRankingListMetadata(props: RankingListProps) {
   };
 }
 
-export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG }: RankingListProps) {
+export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSettings }: RankingListProps) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -40,6 +42,10 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG }: RankingL
   const startFrames = getClipStartFrames(clips, fps);
   const currentIndex = getCurrentClipIndex(startFrames, frame);
   const current = clips[currentIndex];
+  const clipFrame = frame - (startFrames[currentIndex] ?? 0);
+  const transition = studioSettings?.transitions ?? "cut";
+  const opacity = transition === "fade" ? interpolate(clipFrame, [0, Math.max(1, Math.round(fps * 0.25))], [0, 1], { extrapolateRight: "clamp" }) : 1;
+  const zoom = transition === "zoom" ? interpolate(clipFrame, [0, Math.max(1, Math.round(fps * 0.3))], [1.12, 1], { extrapolateRight: "clamp" }) : 1;
 
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
@@ -113,12 +119,17 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG }: RankingL
           {clips.map((clip) => (
             <Series.Sequence key={clip.id} durationInFrames={clipFramesFor(clip.durationInSeconds, fps)}>
               <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
-                <Video src={clip.videoUrl} style={{ maxWidth: "100%", maxHeight: "100%" }} />
+                <Video src={clip.videoUrl} style={{ maxWidth: "100%", maxHeight: "100%", opacity, transform: `scale(${zoom})` }} />
               </AbsoluteFill>
             </Series.Sequence>
           ))}
         </Series>
       </AbsoluteFill>
+      {studioSettings?.captions && current && (
+        <AbsoluteFill style={{ pointerEvents: "none", justifyContent: "flex-end", alignItems: "center", paddingBottom: 200 }}>
+          <div style={{ maxWidth: "85%", padding: "16px 24px", borderRadius: 14, backgroundColor: studioSettings.captionStyle === "minimal" ? "rgba(0,0,0,.65)" : "#facc15", color: studioSettings.captionStyle === "minimal" ? "#fff" : "#111", fontSize: studioSettings.captionStyle === "minimal" ? 38 : 50, fontWeight: 900, textAlign: "center", textTransform: "uppercase" }}>{current.title}</div>
+        </AbsoluteFill>
+      )}
     </AbsoluteFill>
   );
 }
