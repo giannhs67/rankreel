@@ -45,7 +45,7 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
   const clipFrame = frame - (startFrames[currentIndex] ?? 0);
   const transition = studioSettings?.transitions ?? "cut";
   const opacity = transition === "fade" ? interpolate(clipFrame, [0, Math.max(1, Math.round(fps * 0.25))], [0, 1], { extrapolateRight: "clamp" }) : 1;
-  const zoom = transition === "zoom" ? interpolate(clipFrame, [0, Math.max(1, Math.round(fps * 0.3))], [1.12, 1], { extrapolateRight: "clamp" }) : 1;
+
 
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
@@ -119,12 +119,15 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
           {clips.map((clip) => (
             <Series.Sequence key={clip.id} durationInFrames={clipFramesFor(clip.durationInSeconds, fps)}>
               <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
-                <Video src={clip.videoUrl} style={{ maxWidth: "100%", maxHeight: "100%", opacity, transform: `scale(${zoom})` }} />
+                <Video src={clip.videoUrl} style={{ maxWidth: "100%", maxHeight: "100%" }} />
               </AbsoluteFill>
             </Series.Sequence>
           ))}
         </Series>
       </AbsoluteFill>
+      {current && transition === "fade" && (
+        <AbsoluteFill style={{ pointerEvents: "none", top: TOP_HEIGHT, opacity: 1 - opacity, backgroundColor: "black" }} />
+      )}
       {studioSettings?.captions && current && (
         <AbsoluteFill style={{ pointerEvents: "none", justifyContent: "flex-end", alignItems: "center", paddingBottom: 200 }}>
           <div style={{ maxWidth: "85%", padding: "16px 24px", borderRadius: 14, backgroundColor: studioSettings.captionStyle === "minimal" ? "rgba(0,0,0,.65)" : "#facc15", color: studioSettings.captionStyle === "minimal" ? "#fff" : "#111", fontSize: studioSettings.captionStyle === "minimal" ? 38 : 50, fontWeight: 900, textAlign: "center", textTransform: "uppercase" }}>{current.title}</div>
