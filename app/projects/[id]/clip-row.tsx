@@ -19,19 +19,30 @@ export function ClipRow({
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [actionError, setActionError] = useState<string | null>(null);
 
   function move(direction: "up" | "down") {
+    setActionError(null);
     startTransition(async () => {
-      await moveClip(projectId, clip.id, direction);
-      router.refresh();
+      try {
+        await moveClip(projectId, clip.id, direction);
+        router.refresh();
+      } catch (error) {
+        setActionError(error instanceof Error ? error.message : "Could not move clip.");
+      }
     });
   }
 
   function remove() {
     if (!confirm(`Delete clip "${clip.title}"?`)) return;
+    setActionError(null);
     startTransition(async () => {
-      await deleteClip(projectId, clip.id, clip.storage_path);
-      router.refresh();
+      try {
+        await deleteClip(projectId, clip.id, clip.storage_path);
+        router.refresh();
+      } catch (error) {
+        setActionError(error instanceof Error ? error.message : "Could not delete clip.");
+      }
     });
   }
 
@@ -104,7 +115,7 @@ export function ClipRow({
     <li
       data-testid="clip-row"
       data-clip-id={clip.id}
-      className="flex items-center justify-between gap-3 rounded-md border border-black/10 px-4 py-3 dark:border-white/10"
+      className="flex flex-col gap-3 rounded-xl border border-black/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"
     >
       <div className="min-w-0">
         <p className="truncate text-sm font-medium">
@@ -118,7 +129,7 @@ export function ClipRow({
           </p>
         )}
       </div>
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
           disabled={isFirst || pending}
@@ -153,6 +164,7 @@ export function ClipRow({
           Delete
         </button>
       </div>
+      {actionError && <p role="alert" className="text-xs text-red-600 dark:text-red-400">{actionError}</p>}
     </li>
   );
 }
