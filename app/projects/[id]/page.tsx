@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/app-header";
 import { ClipUploadForm } from "./clip-upload-form";
-import { ClipRow } from "./clip-row";
+import { SortableClipList } from "./sortable-clip-list";
 import { RenderPanel } from "./render-panel";
 
 export default async function ProjectPage({
@@ -84,17 +84,7 @@ export default async function ProjectPage({
               No clips yet — upload one above.
             </p>
           )}
-          <ul className="space-y-2">
-            {clips?.map((clip, i) => (
-              <ClipRow
-                key={clip.id}
-                projectId={project.id}
-                clip={clip}
-                isFirst={i === 0}
-                isLast={i === (clips?.length ?? 1) - 1}
-              />
-            ))}
-          </ul>
+          <SortableClipList projectId={project.id} clips={clips ?? []} />
         </section>
 
         {!!clips?.length && (
