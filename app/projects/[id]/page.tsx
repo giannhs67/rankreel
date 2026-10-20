@@ -75,9 +75,9 @@ export default async function ProjectPage({
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-amber-500">Dedicated workspace</p>
                 <h2 className="text-xl font-bold">Ranking Studio</h2>
-                <p className="text-sm text-black/60 dark:text-white/60">Numbered clips, countdown layout, ranking effects and preview.</p>
+                <p className="text-sm text-black/60 dark:text-white/60">Numbered clips, countdown layout, ranking effects and preview. The existing composition uses a six-position layout.</p>
               </div>
-              <span className="rounded-lg bg-amber-400 px-3 py-1 text-xs font-bold text-black">TOP 6</span>
+              <span className="rounded-lg bg-amber-400 px-3 py-1 text-xs font-bold text-black">RANKING</span>
             </div>
             <StudioControls projectId={project.id} />
           </section>
