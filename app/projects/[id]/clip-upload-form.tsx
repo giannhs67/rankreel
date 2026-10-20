@@ -87,7 +87,7 @@ export function ClipUploadForm({ projectId, nextRankingNumber }: { projectId: st
         <input
           name="number"
           type="number"
-          placeholder="Rank (optional)"
+          placeholder={nextRankingNumber ? "Rank" : "Rank (optional)"}
           min={1}
           max={99}
           defaultValue={nextRankingNumber || undefined}
