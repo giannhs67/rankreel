@@ -4,11 +4,11 @@ import { useActionState } from "react";
 import { createProject } from "./actions";
 
 const FORMATS = [
-  { value: "caption", label: "Storytelling / Mysteries", description: "Narration-led scenes and captions" },
+  { value: "caption", label: "Storytelling / Mysteries", description: "Caption-based layout with narration" },
   { value: "title_banner", label: "Events / Facts", description: "Headline-led video stories" },
   { value: "ranking_list", label: "Rankings", description: "Top 5, Top 6 and countdowns" },
-  { value: "caption", label: "Gaming Highlights", description: "Clips, commentary and captions" },
-  { value: "title_banner", label: "Custom Video", description: "Start with your own footage" },
+  { value: "caption", label: "Gaming Highlights", description: "Caption-based layout for gameplay" },
+  { value: "title_banner", label: "Custom Video", description: "Title-banner layout with your footage" },
 ] as const;
 
 export function NewProjectForm() {
