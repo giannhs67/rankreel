@@ -4,7 +4,7 @@ export function AppHeader({ email }: { email: string }) {
   return (
     <header className="flex items-center justify-between border-b border-black/10 px-6 py-4 dark:border-white/10">
       <Link href="/" className="font-semibold">
-        RankReel
+        Short Tube
       </Link>
       <div className="flex items-center gap-4 text-sm">
         <span className="text-black/60 dark:text-white/60">{email}</span>
