@@ -1,4 +1,4 @@
-# RankReel — Top 6 Studio (development branch)
+# Short Tube — Top 6 Studio (development branch)
 
 This branch is for the user's six-clip vertical ranking workflow, accessible from Windows and iPhone.
 
