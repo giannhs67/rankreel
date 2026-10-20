@@ -9,7 +9,8 @@
     "lint": "eslint",
     "create-owner": "node --env-file=.env.local scripts/create-owner.mjs",
     "reset-password": "node --env-file=.env.local scripts/reset-password.mjs",
-    "remotion:studio": "remotion studio remotion/index.ts"
+    "remotion:studio": "remotion studio remotion/index.ts",
+    "test:voice-demo": "node --test tests/voice-demo.test.mjs"
   },
   "dependencies": {
     "@remotion/bundler": "^4.0.502",
