@@ -88,7 +88,7 @@ export async function POST(request: Request) {
   // postgres_changes wasn't reliable for this locally, so we poll instead). Actual render work
   // is serialized via renderQueue, not run concurrently, even if several POSTs land close
   // together (batch renders).
-  const propsWithSettings = format === "ranking_list" && studioSettings
+  const propsWithSettings = studioSettings
     ? { ...renderProps, studioSettings }
     : renderProps;
   renderQueue = renderQueue.then(() =>
@@ -136,7 +136,7 @@ async function runRender(
       },
     });
 
-    if (format === "ranking_list" && renderProps.studioSettings?.script.trim()) {
+    if (renderProps.studioSettings?.script.trim()) {
       await addNarrationToMp4(outputLocation, renderProps.studioSettings);
     }
 
