@@ -84,7 +84,7 @@ export function StudioControls({ projectId }: { projectId: string }) {
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-1 text-sm">
-          <span className="font-medium">English AI voice</span>
+          <span className="font-medium">English narration voice</span>
           <select className={input} value={settings.voice} onChange={e => change({ voice: e.target.value as StudioSettings["voice"] })}>
             <option value="deep">Deep cinematic</option>
             <option value="energetic">Energetic viral</option>
@@ -118,7 +118,7 @@ export function StudioControls({ projectId }: { projectId: string }) {
         setVoicePreviewing(true);
         window.speechSynthesis.speak(utterance);
       }}>{voicePreviewing ? "Stop voice preview" : "Listen to browser voice preview"}</button>
-      <p className="text-xs text-black/50 dark:text-white/50">Browser voice preview only — this audio is not included in exported MP4.</p>
+      <p className="text-xs text-black/50 dark:text-white/50">Browser voice preview uses your device voice. On Windows, MP4 export uses installed Windows speech voices; the two may sound different.</p>
       <div className="flex flex-wrap gap-4 text-sm">
         <label className="flex items-center gap-2"><input type="checkbox" checked={settings.captions} onChange={e => change({ captions: e.target.checked })}/> Auto captions</label>
         <label className="flex items-center gap-2"><input type="checkbox" checked={settings.music} onChange={e => change({ music: e.target.checked })}/> Background music</label>
@@ -165,7 +165,7 @@ export function StudioControls({ projectId }: { projectId: string }) {
         </label>
       </div>
       <p className="text-xs text-black/50 dark:text-white/50">
-        Editor configuration prototype: local autosave, Undo/Redo, import/export work now. Ranking transitions and title overlays are connected to MP4 rendering. AI voice, timed speech captions, background music and automatic editing are not connected yet.
+        Editor configuration prototype: local autosave, Undo/Redo, import/export work now. Ranking transitions and title overlays are connected to MP4 rendering. Windows offline narration is wired into ranking MP4 export but has not been verified on Windows. Timed speech captions, background music and automatic editing are not connected yet.
       </p>
     </section>
   );
