@@ -22,7 +22,7 @@ export default async function ProjectPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("id, name")
+    .select("id, name, format")
     .eq("id", id)
     .single();
 
@@ -73,14 +73,14 @@ export default async function ProjectPage({
 
         <section>
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
-            Add a clip
+            Add a video scene
           </h2>
-          <ClipUploadForm projectId={project.id} nextRankingNumber={Math.max(1, 6 - (clips?.length ?? 0))} />
+          <ClipUploadForm projectId={project.id} nextRankingNumber={project.format === "ranking_list" ? Math.max(1, 6 - (clips?.length ?? 0)) : 0} />
         </section>
 
         <section>
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
-            Clips ({clips?.length ?? 0}/6 recommended for Top 6)
+            {project.format === "ranking_list" ? `Ranking clips (${clips?.length ?? 0}; six suggested)` : `Video scenes (${clips?.length ?? 0})`}
           </h2>
           {!clips?.length && (
             <p className="text-sm text-black/50 dark:text-white/50">
