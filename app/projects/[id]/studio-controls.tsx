@@ -165,7 +165,7 @@ export function StudioControls({ projectId }: { projectId: string }) {
         </label>
       </div>
       <p className="text-xs text-black/50 dark:text-white/50">
-        Editor configuration prototype: local autosave, Undo/Redo, import/export work now. Ranking transitions and title overlays are connected to ranking MP4 rendering. Other formats use their existing compositions. Windows offline narration is wired into ranking MP4 export but has not been verified on Windows. Timed speech captions, background music and automatic editing are not connected yet.
+        Editor configuration prototype: local autosave, Undo/Redo, import/export work now. Ranking transitions and title overlays are connected to ranking MP4 rendering. Other formats use their existing compositions. Windows offline narration is wired into MP4 export for all formats but has not been verified on Windows. Timed speech captions, background music and automatic editing are not connected yet.
       </p>
     </section>
   );
