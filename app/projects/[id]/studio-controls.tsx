@@ -123,7 +123,7 @@ export function StudioControls({ projectId, ranking = false }: { projectId: stri
         {ranking && <label className="flex items-center gap-2"><input type="checkbox" checked={settings.captions} onChange={e => change({ captions: e.target.checked })}/> Clip title overlays</label>}
         <span className="text-xs text-black/50 dark:text-white/50">Timed captions and background music are planned, not active.</span>
       </div>
-      {settings.mode === "advanced" && (
+      {settings.mode === "advanced" && ranking && (
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="space-y-1 text-sm">
             <span className="font-medium">Caption style</span>
@@ -131,10 +131,7 @@ export function StudioControls({ projectId, ranking = false }: { projectId: stri
               <option value="bold">Bold viral</option><option value="minimal">Minimal</option><option value="karaoke">Karaoke</option>
             </select>
           </label>
-          <label className="space-y-1 text-sm">
-            <span className="font-medium">Music volume: {settings.volume}%</span>
-            <input className="w-full" type="range" min="0" max="100" value={settings.volume} onChange={e => change({ volume: Number(e.target.value) })}/>
-          </label>
+
         </div>
       )}
       <p className="text-xs text-black/50 dark:text-white/50">Review your preview before pressing Render MP4. Automatic creation is not available yet.</p>
@@ -162,7 +159,7 @@ export function StudioControls({ projectId, ranking = false }: { projectId: stri
         </label>
       </div>
       <p className="text-xs text-black/50 dark:text-white/50">
-        Editor configuration prototype: local autosave, Undo/Redo, import/export work now. Ranking transitions and title overlays are connected to ranking MP4 rendering. Other formats use their existing compositions. Windows offline narration is wired into MP4 export for all formats but has not been verified on Windows. Timed speech captions, background music and automatic editing are not connected yet.
+        Local autosave, Undo/Redo and settings import/export are available. Ranking effects are limited to ranking exports. Offline Windows narration is wired into all MP4 formats but awaits a real Windows render test. Automatic editing, timed captions and music are not yet available.
       </p>
     </section>
   );
