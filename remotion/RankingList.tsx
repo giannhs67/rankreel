@@ -47,6 +47,8 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
   const opacity = transition === "fade" ? interpolate(clipFrame, [0, Math.max(1, Math.round(fps * 0.25))], [0, 1], { extrapolateRight: "clamp" }) : 1;
 
 
+  const zoom = transition === "zoom" ? interpolate(clipFrame, [0, Math.max(1, Math.round(fps * 0.3))], [1.12, 1], { extrapolateRight: "clamp" }) : 1;
+
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
       {/* Top: blurred backdrop of the current clip + the ranking list */}
@@ -114,7 +116,7 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
       </AbsoluteFill>
 
       {/* Bottom: current clip, letterboxed */}
-      <AbsoluteFill style={{ top: TOP_HEIGHT, backgroundColor: "black" }}>
+      <AbsoluteFill style={{ top: TOP_HEIGHT, backgroundColor: "black", transform: `scale(${zoom})` }}>
         <Series>
           {clips.map((clip) => (
             <Series.Sequence key={clip.id} durationInFrames={clipFramesFor(clip.durationInSeconds, fps)}>
