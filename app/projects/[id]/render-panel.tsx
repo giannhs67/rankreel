@@ -91,11 +91,12 @@ export function RenderPanel({
       <button
         type="button"
         onClick={handleRender}
-        disabled={starting}
+        disabled={starting || jobs.some(j => j.status === "queued" || j.status === "rendering")}
         className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-60"
       >
-        {starting ? "Starting…" : "Render MP4 (local)"}
+        {starting ? "Starting…" : jobs.some(j => j.status === "queued" || j.status === "rendering") ? "Render in progress…" : "Render MP4 (local)"}
       </button>
+      <p className="text-xs text-black/50 dark:text-white/50">Renders on your Windows computer. Check the preview before exporting; no automatic publishing.</p>
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       {jobs.length > 0 && (
