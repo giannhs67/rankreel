@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RankReel",
+  title: "Short Tube",
   description: "Self-hosted tool for turning clips into ranking-list, title-banner, and caption Shorts.",
 };
 
