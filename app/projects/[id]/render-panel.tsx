@@ -60,7 +60,7 @@ export function RenderPanel({
       const res = await fetch("/api/render", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId }),
+        body: JSON.stringify({ projectId, studioSettings: (() => { try { const raw = localStorage.getItem(`short-tube-studio-${projectId}`); return raw ? JSON.parse(raw) : null; } catch { return null; } })() }),
       });
       const data = await res.json();
       if (!res.ok) {
