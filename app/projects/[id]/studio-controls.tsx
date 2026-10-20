@@ -20,7 +20,7 @@ const defaults: StudioSettings = {
   volume: 25, autoCreate: false,
 };
 
-export function StudioControls({ projectId }: { projectId: string }) {
+export function StudioControls({ projectId, ranking = false }: { projectId: string; ranking?: boolean }) {
   const [settings, setSettings] = useState<StudioSettings>(() => {
     if (typeof window === "undefined") return defaults;
     try {
@@ -64,9 +64,9 @@ export function StudioControls({ projectId }: { projectId: string }) {
     <section className="space-y-4 rounded-2xl border border-black/10 bg-black/[.02] p-4 dark:border-white/10 dark:bg-white/[.03]">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">Short Tube Studio</h2>
+          <h2 className="text-lg font-semibold">{ranking ? "Ranking controls" : "Video controls"}</h2>
           <p className="text-xs text-black/50 dark:text-white/50">
-            Draft autosave on this device · Some effects currently apply only to ranking renders
+            Draft autosave on this device · Only connected export effects are enabled
           </p>
         </div>
         <div className="flex gap-2">
@@ -91,12 +91,12 @@ export function StudioControls({ projectId }: { projectId: string }) {
             <option value="documentary">Documentary</option>
           </select>
         </label>
-        <label className="space-y-1 text-sm">
+        {ranking && <label className="space-y-1 text-sm">
           <span className="font-medium">Transitions</span>
           <select className={input} value={settings.transitions} onChange={e => change({ transitions: e.target.value as StudioSettings["transitions"] })}>
             <option value="cut">Quick cut</option><option value="fade">Fade</option><option value="zoom">Zoom</option>
           </select>
-        </label>
+        </label>}
       </div>
       <label className="block space-y-1 text-sm">
         <span className="font-medium">Voiceover script</span>
@@ -120,8 +120,8 @@ export function StudioControls({ projectId }: { projectId: string }) {
       }}>{voicePreviewing ? "Stop voice preview" : "Listen to browser voice preview"}</button>
       <p className="text-xs text-black/50 dark:text-white/50">Browser voice preview uses your device voice. On Windows, MP4 export uses installed Windows speech voices; the two may sound different.</p>
       <div className="flex flex-wrap gap-4 text-sm">
-        <label className="flex items-center gap-2"><input type="checkbox" checked={settings.captions} onChange={e => change({ captions: e.target.checked })}/> Auto captions</label>
-        <label className="flex items-center gap-2"><input type="checkbox" checked={settings.music} onChange={e => change({ music: e.target.checked })}/> Background music</label>
+        {ranking && <label className="flex items-center gap-2"><input type="checkbox" checked={settings.captions} onChange={e => change({ captions: e.target.checked })}/> Clip title overlays</label>}
+        <span className="text-xs text-black/50 dark:text-white/50">Timed captions and background music are planned, not active.</span>
       </div>
       {settings.mode === "advanced" && (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -137,10 +137,7 @@ export function StudioControls({ projectId }: { projectId: string }) {
           </label>
         </div>
       )}
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={settings.autoCreate} onChange={e => change({ autoCreate: e.target.checked })}/>
-        Prepare automatically, require my approval before export
-      </label>
+      <p className="text-xs text-black/50 dark:text-white/50">Review your preview before pressing Render MP4. Automatic creation is not available yet.</p>
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={() => {
           const blob = new Blob([JSON.stringify(settings, null, 2)], { type: "application/json" });
