@@ -84,7 +84,7 @@ export function ClipUploadForm({ projectId, nextRankingNumber }: { projectId: st
           required
           className="min-w-0 flex-1 rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/15"
         />
-        <input
+        {nextRankingNumber > 0 && <input
           name="number"
           type="number"
           placeholder={nextRankingNumber ? "Rank" : "Rank (optional)"}
@@ -93,7 +93,7 @@ export function ClipUploadForm({ projectId, nextRankingNumber }: { projectId: st
           defaultValue={nextRankingNumber || undefined}
           key={nextRankingNumber}
           className="w-full rounded-md border sm:w-24 border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/15"
-        />
+        />}
       </div>
       <input
         name="file"
