@@ -105,7 +105,8 @@ export function StudioControls({ projectId }: { projectId: string }) {
           placeholder="These are the six most incredible moments..." className={input} />
       </label>
       <button type="button" className="rounded-lg border border-black/15 px-3 py-2 text-sm dark:border-white/20" onClick={() => {
-        if (typeof window === "undefined" || !("speechSynthesis" in window)) { window.alert("Speech preview is not supported in this browser."); return; }
+        if (typeof window === "undefined") return;
+        if (!("speechSynthesis" in window)) { window.alert("Speech preview is not supported in this browser."); return; }
         window.speechSynthesis.cancel();
         if (voicePreviewing) { setVoicePreviewing(false); return; }
         const utterance = new SpeechSynthesisUtterance(settings.script.trim() || "These are the six most incredible moments.");
