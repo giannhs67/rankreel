@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎬 RankReel
+# 🎬 Short Tube
 
 ### Free, Open-Source, Self-Hosted Video Generator for YouTube Shorts, TikTok & Instagram Reels
 
@@ -31,7 +31,7 @@ infrastructure, keep 100% ownership of your content and data, no subscriptions, 
 
 ## 📖 About
 
-**RankReel** is a self-hosted, open-source alternative to closed SaaS "Shorts maker" tools. It's a
+**Short Tube** is a self-hosted, open-source alternative to closed SaaS "Shorts maker" tools. It's a
 browser-based video generator purpose-built for creating **YouTube Shorts**, **TikTok clips**, and
 **Instagram Reels** in the formats that actually perform: **Top 5 / ranking-list countdown videos**,
 **title-banner highlight clips**, and **auto-captioned short-form videos** — complete with a visual
@@ -54,7 +54,7 @@ No monthly fees. No usage limits. No one else's servers touching your footage. Y
 - 🔐 **Real authentication & data isolation** — Supabase Auth + Postgres Row-Level Security. Your
   clips and renders are private by default.
 - 🧩 **100% self-hosted** — Next.js App Router + Supabase (Postgres/Auth/Storage), deployable to your
-  own Vercel + Supabase project. No RankReel-run backend, ever.
+  own Vercel + Supabase project. No third-party hosted backend, ever.
 
 ## 📸 Screenshots
 
@@ -63,13 +63,13 @@ No monthly fees. No usage limits. No one else's servers touching your footage. Y
 <td width="50%">
 
 **Dashboard — all your projects**
-<img src=".github/screenshots/dashboard.png" alt="RankReel project dashboard" width="100%">
+<img src=".github/screenshots/dashboard.png" alt="Short Tube project dashboard" width="100%">
 
 </td>
 <td width="50%">
 
 **Project workspace — upload, reorder, render**
-<img src=".github/screenshots/project-detail.png" alt="RankReel project detail with clips and render panel" width="100%">
+<img src=".github/screenshots/project-detail.png" alt="Short Tube project detail with clips and render panel" width="100%">
 
 </td>
 </tr>
@@ -77,13 +77,13 @@ No monthly fees. No usage limits. No one else's servers touching your footage. Y
 <td width="50%">
 
 **Style editor — drag-to-position, fonts, colors, animation**
-<img src=".github/screenshots/editor-ranking-list.png" alt="RankReel Konva style editor" width="100%">
+<img src=".github/screenshots/editor-ranking-list.png" alt="Short Tube Konva style editor" width="100%">
 
 </td>
 <td width="50%">
 
 **Live preview — real footage, real styling, real time**
-<img src=".github/screenshots/preview-ranking-list.png" alt="RankReel live Remotion preview" width="100%">
+<img src=".github/screenshots/preview-ranking-list.png" alt="Short Tube live Remotion preview" width="100%">
 
 </td>
 </tr>
@@ -91,13 +91,13 @@ No monthly fees. No usage limits. No one else's servers touching your footage. Y
 <td width="50%">
 
 **Batch render — multiple projects, one queue**
-<img src=".github/screenshots/batch-render.png" alt="RankReel batch render dashboard" width="100%">
+<img src=".github/screenshots/batch-render.png" alt="Short Tube batch render dashboard" width="100%">
 
 </td>
 <td width="50%">
 
 **Sign-in — single-owner, private by default**
-<img src=".github/screenshots/login.png" alt="RankReel login screen" width="100%">
+<img src=".github/screenshots/login.png" alt="Short Tube login screen" width="100%">
 
 </td>
 </tr>
@@ -116,7 +116,7 @@ No monthly fees. No usage limits. No one else's servers touching your footage. Y
 
 ## 🚀 Getting Started (self-hosting)
 
-RankReel is designed to run as **your own deployment**, not a shared service.
+Short Tube is designed to run as **your own deployment**, not a shared service.
 
 1. **Create a [Supabase](https://supabase.com) project** (or run one locally via the
    [Supabase CLI](https://supabase.com/docs/guides/local-development)).
@@ -165,14 +165,14 @@ Community behavior is governed by the [Code of Conduct](CODE_OF_CONDUCT.md). Fou
 
 ### 🏷️ Versioning & Releases
 
-RankReel follows [Semantic Versioning 2.0.0](https://semver.org) (`MAJOR.MINOR.PATCH`) and ships
+Short Tube follows [Semantic Versioning 2.0.0](https://semver.org) (`MAJOR.MINOR.PATCH`) and ships
 tagged [GitHub Releases](https://github.com/amjadiqbal/rankreel/releases) with changelogs. See
 [CONTRIBUTING.md → Versioning & Releases](CONTRIBUTING.md#versioning--releases) for exactly how tags
 are cut and what bumps which number.
 
 ## 💖 Sponsors
 
-RankReel is free and will stay free and open-source. If it saves you time or money, consider
+Short Tube is free and will stay free and open-source. If it saves you time or money, consider
 supporting its development:
 
 <a href="https://github.com/sponsors/amjadiqbal">
@@ -183,10 +183,10 @@ No sponsors yet — **be the first!** Sponsors get a shout-out here and on relea
 
 ## 👥 Contributors
 
-Thanks to everyone who contributes to RankReel!
+Thanks to everyone who contributes to Short Tube!
 
 <a href="https://github.com/amjadiqbal/rankreel/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=amjadiqbal/rankreel" alt="RankReel contributors" />
+  <img src="https://contrib.rocks/image?repo=amjadiqbal/rankreel" alt="Short Tube contributors" />
 </a>
 
 Want to see your avatar here? See [Contributing](#-contributing) above.
@@ -208,6 +208,6 @@ telemetry, self-hosted only, etc).
 
 <div align="center">
 
-**⭐ If RankReel is useful to you, consider starring the repo — it genuinely helps others find it.**
+**⭐ If Short Tube is useful to you, consider starring the repo — it genuinely helps others find it.**
 
 </div>
