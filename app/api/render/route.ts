@@ -6,6 +6,7 @@ import { getTitleBannerRenderProps } from "@/lib/title-banner-render-data";
 import { getCaptionRenderProps } from "@/lib/caption-render-data";
 import { RENDERS_DIR, renderCompositionLocally } from "@/worker/render";
 import type { CompositionFormat } from "@/shared/types";
+import { parseStudioSettings } from "@/shared/studio-settings";
 
 const COMPOSITION_ID: Record<CompositionFormat, "RankingList" | "TitleBanner" | "Caption"> = {
   ranking_list: "RankingList",
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
   }
 
   const format = project.format as CompositionFormat;
+  const studioSettings = parseStudioSettings(body?.studioSettings);
   const renderProps = await getRenderPropsForFormat(supabase, format, projectId);
   if (!renderProps) {
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
@@ -81,8 +83,11 @@ export async function POST(request: Request) {
   // postgres_changes wasn't reliable for this locally, so we poll instead). Actual render work
   // is serialized via renderQueue, not run concurrently, even if several POSTs land close
   // together (batch renders).
+  const propsWithSettings = format === "ranking_list" && studioSettings
+    ? { ...renderProps, studioSettings }
+    : renderProps;
   renderQueue = renderQueue.then(() =>
-    runRender(format, projectId, job.id, renderProps).catch((err) => {
+    runRender(format, projectId, job.id, propsWithSettings).catch((err) => {
       console.error(`[render] job ${job.id} failed:`, err);
     }),
   );
@@ -94,7 +99,7 @@ async function runRender(
   format: CompositionFormat,
   projectId: string,
   jobId: string,
-  renderProps: { projectName: string; clips: unknown[]; config: unknown },
+  renderProps: { projectName: string; clips: unknown[]; config: unknown; studioSettings?: unknown },
 ) {
   const supabase = await createClient();
 
@@ -107,6 +112,7 @@ async function runRender(
       projectName: renderProps.projectName,
       clips: renderProps.clips,
       config: renderProps.config,
+      studioSettings: renderProps.studioSettings,
     };
 
     const outputLocation = await renderCompositionLocally({
