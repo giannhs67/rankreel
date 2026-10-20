@@ -4,9 +4,11 @@ import { useActionState } from "react";
 import { createProject } from "./actions";
 
 const FORMATS = [
-  { value: "ranking_list", label: "Top 6 Ranking Short" },
-  { value: "title_banner", label: "Title Banner" },
-  { value: "caption", label: "Caption" },
+  { value: "caption", label: "Storytelling / Mysteries", description: "Narration-led scenes and captions" },
+  { value: "title_banner", label: "Events / Facts", description: "Headline-led video stories" },
+  { value: "ranking_list", label: "Rankings", description: "Top 5, Top 6 and countdowns" },
+  { value: "caption", label: "Gaming Highlights", description: "Clips, commentary and captions" },
+  { value: "title_banner", label: "Custom Video", description: "Start with your own footage" },
 ] as const;
 
 export function NewProjectForm() {
@@ -17,18 +19,18 @@ export function NewProjectForm() {
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
           name="name"
-          placeholder="Project name"
+          placeholder="Video title or project name"
           required
           className="min-w-0 flex-1 rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/15"
         />
         <select
           name="format"
-          defaultValue="ranking_list"
+          defaultValue="caption"
           className="rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/15"
         >
           {FORMATS.map((f) => (
             <option key={f.value} value={f.value}>
-              {f.label}
+              {f.label} — {f.description}
             </option>
           ))}
         </select>
@@ -37,7 +39,7 @@ export function NewProjectForm() {
           disabled={pending}
           className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-60"
         >
-          {pending ? "Creating…" : "Create"}
+          {pending ? "Creating…" : "Create project"}
         </button>
       </div>
       {state?.error && (
