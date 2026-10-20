@@ -66,7 +66,7 @@ export function StudioControls({ projectId }: { projectId: string }) {
         <div>
           <h2 className="text-lg font-semibold">Short Tube Studio</h2>
           <p className="text-xs text-black/50 dark:text-white/50">
-            Draft autosave on this device · Ranking transitions and title overlays apply on MP4 render
+            Draft autosave on this device · Some effects currently apply only to ranking renders
           </p>
         </div>
         <div className="flex gap-2">
@@ -102,14 +102,14 @@ export function StudioControls({ projectId }: { projectId: string }) {
         <span className="font-medium">Voiceover script</span>
         <textarea rows={settings.mode === "advanced" ? 6 : 3} value={settings.script}
           onChange={e => change({ script: e.target.value })}
-          placeholder="These are the six most incredible moments..." className={input} />
+          placeholder="Write the narration for your story, event or video..." className={input} />
       </label>
       <button type="button" className="rounded-lg border border-black/15 px-3 py-2 text-sm dark:border-white/20" onClick={() => {
         if (typeof window === "undefined") return;
         if (!("speechSynthesis" in window)) { window.alert("Speech preview is not supported in this browser."); return; }
         window.speechSynthesis.cancel();
         if (voicePreviewing) { setVoicePreviewing(false); return; }
-        const utterance = new SpeechSynthesisUtterance(settings.script.trim() || "These are the six most incredible moments.");
+        const utterance = new SpeechSynthesisUtterance(settings.script.trim() || "Welcome to Short Tube Studio.");
         utterance.lang = "en-US";
         utterance.rate = settings.voice === "energetic" ? 1.15 : settings.voice === "deep" ? 0.9 : 1;
         utterance.pitch = settings.voice === "deep" ? 0.75 : 1;
@@ -165,7 +165,7 @@ export function StudioControls({ projectId }: { projectId: string }) {
         </label>
       </div>
       <p className="text-xs text-black/50 dark:text-white/50">
-        Editor configuration prototype: local autosave, Undo/Redo, import/export work now. Ranking transitions and title overlays are connected to MP4 rendering. Windows offline narration is wired into ranking MP4 export but has not been verified on Windows. Timed speech captions, background music and automatic editing are not connected yet.
+        Editor configuration prototype: local autosave, Undo/Redo, import/export work now. Ranking transitions and title overlays are connected to ranking MP4 rendering. Other formats use their existing compositions. Windows offline narration is wired into ranking MP4 export but has not been verified on Windows. Timed speech captions, background music and automatic editing are not connected yet.
       </p>
     </section>
   );
