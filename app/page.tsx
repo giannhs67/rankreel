@@ -25,8 +25,8 @@ export default async function Home() {
       <main className="mx-auto max-w-5xl space-y-8 px-4 py-6 sm:p-8">
         <section>
           <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-black/50 dark:text-white/50">Creator studio</p>
-          <h1 className="mb-2 text-3xl font-bold tracking-tight">Create your next Short</h1>
-          <p className="mb-5 text-sm text-black/60 dark:text-white/60">Build a Top 6 ranking, preview it, then render on your Windows PC.</p>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight">Create any kind of video</h1>
+          <p className="mb-5 text-sm text-black/60 dark:text-white/60">Start with a story, interesting event, gaming highlight, ranking or your own footage. Edit, preview and render on your Windows PC.</p>
           <NewProjectForm />
         </section>
 
