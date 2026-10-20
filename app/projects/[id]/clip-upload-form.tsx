@@ -87,9 +87,9 @@ export function ClipUploadForm({ projectId, nextRankingNumber }: { projectId: st
         {nextRankingNumber > 0 && <input
           name="number"
           type="number"
-          placeholder={nextRankingNumber ? "Rank" : "Rank (optional)"}
+          placeholder="Rank"
           min={1}
-          max={99}
+          max={6}
           defaultValue={nextRankingNumber || undefined}
           key={nextRankingNumber}
           className="w-full rounded-md border sm:w-24 border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/15"
