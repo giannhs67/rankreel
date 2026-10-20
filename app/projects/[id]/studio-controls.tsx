@@ -72,7 +72,7 @@ export function StudioControls({ projectId }: { projectId: string }) {
         <div>
           <h2 className="text-lg font-semibold">Short Tube Studio</h2>
           <p className="text-xs text-black/50 dark:text-white/50">
-            {saved ? "Draft saved on this device" : "Draft not saved"} · Settings are not yet applied to video rendering
+            {saved ? "Draft saved on this device" : "Draft not saved"} · Ranking transitions and title overlays apply on MP4 render
           </p>
         </div>
         <div className="flex gap-2">
@@ -156,7 +156,7 @@ export function StudioControls({ projectId }: { projectId: string }) {
         </label>
       </div>
       <p className="text-xs text-black/50 dark:text-white/50">
-        Editor configuration prototype: local autosave, Undo/Redo, import/export work now. AI audio, automatic editing and applying these settings to MP4 are upcoming integrations.
+        Editor configuration prototype: local autosave, Undo/Redo, import/export work now. Ranking transitions and title overlays are connected to MP4 rendering. AI voice, timed speech captions, background music and automatic editing are not connected yet.
       </p>
     </section>
   );
