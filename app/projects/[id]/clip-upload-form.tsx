@@ -80,17 +80,17 @@ export function ClipUploadForm({ projectId, nextRankingNumber }: { projectId: st
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
           name="title"
-          placeholder="Title"
+          placeholder="Scene title / on-screen text"
           required
           className="min-w-0 flex-1 rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/15"
         />
         <input
           name="number"
           type="number"
-          placeholder="#"
+          placeholder="Rank (optional)"
           min={1}
-          max={6}
-          defaultValue={nextRankingNumber}
+          max={99}
+          defaultValue={nextRankingNumber || undefined}
           key={nextRankingNumber}
           className="w-full rounded-md border sm:w-24 border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/15"
         />
