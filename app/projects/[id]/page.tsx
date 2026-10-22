@@ -48,13 +48,13 @@ export default async function ProjectPage({
     : { data: null };
   const rawStyle = savedStyle?.config_json ?? null;
   const quickStyle = project.format === "ranking_list"
-    ? (() => { const v = resolveRankingConfig(rawStyle); return {
+    ? (() => { const v = resolveRankingConfig(rawStyle as Parameters<typeof resolveRankingConfig>[0]); return {
         textColor: v.text.baseColor, accentColor: v.text.currentColor, fontSize: v.text.fontSize }; })()
     : project.format === "caption"
-      ? (() => { const v = resolveCaptionConfig(rawStyle); return {
+      ? (() => { const v = resolveCaptionConfig(rawStyle as Parameters<typeof resolveCaptionConfig>[0]); return {
           textColor: v.text.color, accentColor: /^#[0-9a-fA-F]{6}$/.test(v.text.backgroundColor)
             ? v.text.backgroundColor : "#000000", fontSize: v.text.fontSize }; })()
-      : (() => { const v = resolveTitleBannerConfig(rawStyle); return {
+      : (() => { const v = resolveTitleBannerConfig(rawStyle as Parameters<typeof resolveTitleBannerConfig>[0]); return {
           textColor: v.text.color, accentColor: v.text.strokeColor, fontSize: v.text.fontSize }; })();
 
   const { data: jobs } = await supabase
