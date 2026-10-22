@@ -38,13 +38,21 @@ export function SimpleStyleEditor({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const modified = useRef(false);
+  // Serialize writes so a slower older save cannot overwrite the newest style.
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
+  function saveInOrder(nextConfig: typeof config) {
+    const next = saveQueue.current.catch(() => undefined)
+      .then(() => updateTemplateConfig(projectId, templateId, nextConfig));
+    saveQueue.current = next;
+    return next;
+  }
   // Only save intentional edits, not the initial config or an applied template.
   useEffect(() => {
     if (!modified.current) return;
     const timer = window.setTimeout(async () => {
       try {
         setSaveState("saving");
-        await updateTemplateConfig(projectId, templateId, config);
+        await saveInOrder(config);
         setSaveState("saved");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Autosave failed.");
@@ -114,7 +122,7 @@ export function SimpleStyleEditor({
     setSaveState("saving");
     setError(null);
     try {
-      await updateTemplateConfig(projectId, templateId, config);
+      await saveInOrder(config);
       setSaveState("saved");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed.");
