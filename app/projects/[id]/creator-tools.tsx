@@ -61,8 +61,9 @@ export function CreatorTools({ projectId, clips, ranking }: { projectId: string;
       const next = { ...base, ...presetOptions[preset] };
       localStorage.setItem(key, JSON.stringify(next));
       localStorage.setItem(styleKey, preset);
+      window.dispatchEvent(new CustomEvent("short-tube-studio-update-" + projectId, { detail: presetOptions[preset] }));
       setSettings(next);
-      setNote(preset + " saved. Refresh the project before editing other studio controls.");
+      setNote(preset + " applied to the studio controls.");
     } catch {
       setNote("Could not save preset in this browser.");
     }
@@ -132,6 +133,20 @@ export function CreatorTools({ projectId, clips, ranking }: { projectId: string;
           )}
           <label className="block space-y-1 text-xs text-white/70">Version A<textarea value={scriptA} onChange={e => setScriptA(e.target.value)} rows={3} placeholder="Write hook A..." className="w-full rounded-lg border border-white/20 bg-[#262a34] p-3 text-sm text-white" /></label>
           <label className="block space-y-1 text-xs text-white/70">Version B<textarea value={scriptB} onChange={e => setScriptB(e.target.value)} rows={3} placeholder="Write hook B..." className="w-full rounded-lg border border-white/20 bg-[#262a34] p-3 text-sm text-white" /></label>
+          <div className="flex flex-wrap gap-2">
+            {([{ label: "Use A as voiceover", text: scriptA }, { label: "Use B as voiceover", text: scriptB }]).map(option => (
+              <button key={option.label} type="button" disabled={!option.text.trim()} onClick={() => {
+                const key = "short-tube-studio-" + projectId;
+                const stored = safeJSON(localStorage.getItem(key));
+                const base = stored && typeof stored === "object" && !Array.isArray(stored) ? stored : {};
+                const next = { ...base, script: option.text };
+                localStorage.setItem(key, JSON.stringify(next));
+                window.dispatchEvent(new CustomEvent("short-tube-studio-update-" + projectId, { detail: { script: option.text } }));
+                setSettings(next);
+                setNote(option.label + " selected for narration.");
+              }} className="rounded-lg bg-amber-400 px-3 py-2 text-xs font-semibold text-black disabled:opacity-40">{option.label}</button>
+            ))}
+          </div>
           <p className="text-xs text-white/50">This compares text drafts, not rendered A/B videos.</p>
         </div>
       )}
