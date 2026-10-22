@@ -105,6 +105,37 @@ export function SimpleStyleEditor({
 
   return (
     <div className="max-w-xl space-y-5">
+      <section className="rounded-2xl border border-black/10 bg-black/[.03] p-4 dark:border-white/15 dark:bg-white/[.04]">
+        <h2 className="mb-1 text-sm font-semibold">Live layout preview</h2>
+        <p className="mb-3 text-xs text-black/50 dark:text-white/50">Font, color, size and position update here immediately. Sample background; actual video is shown on the Preview page.</p>
+        <div className="mx-auto w-full max-w-[260px] overflow-hidden rounded-xl border border-white/15 bg-[#161d31]" style={{ aspectRatio: "9 / 16", position: "relative" }}>
+          <div className="absolute inset-0 bg-gradient-to-b from-[#34445c] via-[#172236] to-[#060a11]" />
+          <div
+            style={{
+              position: "absolute",
+              top: `${Math.max(0, Math.min(100, config.position.y / 1920 * 100))}%`,
+              left: `${Math.max(0, Math.min(90, config.position.x / 1080 * 100))}%`,
+              right: format === "caption" ? `${Math.max(0, Math.min(90, config.position.x / 1080 * 100))}%` : undefined,
+              fontFamily: `"${config.font.family}", sans-serif`,
+              fontSize: `${config.text.fontSize * (260 / 1080)}px`,
+              fontWeight: 800,
+              lineHeight: 1.2,
+              color: config.text.color,
+              textAlign: format === "caption" ? "center" : "left",
+              backgroundColor: format === "caption" ? (config as CaptionConfig).text.backgroundColor : undefined,
+              WebkitTextStroke: format === "title_banner" && (config as TitleBannerConfig).text.strokeWidth > 0
+                ? `${(config as TitleBannerConfig).text.strokeWidth * (260 / 1080)}px ${(config as TitleBannerConfig).text.strokeColor}`
+                : undefined,
+              overflowWrap: "anywhere",
+              maxWidth: format === "caption" ? undefined : "85%",
+              borderRadius: 5,
+              padding: format === "caption" ? 5 : 0,
+            }}
+          >
+            {format === "caption" ? "YOUR CAPTION HERE" : "YOUR VIDEO TITLE"}
+          </div>
+        </div>
+      </section>
       <div>
         <label className="mb-1 block text-sm font-medium">Font</label>
         <select
