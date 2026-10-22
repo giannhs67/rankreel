@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { saveQuickStyle } from "./editor/actions";
 
-type QuickSettings = { textColor: string; accentColor: string; fontSize: number };
+type QuickSettings = { textColor: string; accentColor: string; fontSize: number; captionOpacity?: number };
 
 export function QuickStyle({
   projectId, initial, format,
@@ -51,6 +51,14 @@ export function QuickStyle({
             className="block w-full accent-amber-400" />
         </label>
       </div>
+      {format === "caption" && (
+        <label className="block space-y-1 text-xs font-medium">
+          <span>Caption background opacity · {settings.captionOpacity ?? 100}%</span>
+          <input type="range" min={0} max={100} value={settings.captionOpacity ?? 100}
+            onChange={e => setSettings(s => ({ ...s, captionOpacity: Number(e.target.value) }))}
+            className="block w-full accent-amber-400" />
+        </label>
+      )}
       <button type="button" onClick={save} disabled={pending}
         className="rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-black disabled:opacity-50">
         {pending ? "Saving…" : "Save style & refresh preview"}
