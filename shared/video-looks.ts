@@ -9,6 +9,21 @@ export const VIDEO_LOOKS = {
 
 export type VideoLook = keyof typeof VIDEO_LOOKS;
 
-export function getVideoLookFilter(look: VideoLook | undefined | null): string {
-  return VIDEO_LOOKS[look ?? "original"]?.filter ?? "none";
+export function getVideoLookFilter(look: VideoLook | undefined | null, intensity = 100): string {
+  const amount = Math.max(0, Math.min(100, Number.isFinite(intensity) ? intensity : 100)) / 100;
+  if (!look || look === "original" || amount === 0) return "none";
+  // Interpolate each grade's CSS parameters toward their neutral values.
+  const mix = (neutral: number, target: number) => Number((neutral + (target - neutral) * amount).toFixed(3));
+  switch (look) {
+    case "retro80s":
+      return `saturate(${mix(1, 1.5)}) contrast(${mix(1, 1.2)}) sepia(${mix(0, 0.18)}) hue-rotate(${mix(0, 315)}deg)`;
+    case "monochrome":
+      return `grayscale(${mix(0, 1)}) contrast(${mix(1, 1.22)})`;
+    case "vintage":
+      return `sepia(${mix(0, 0.65)}) saturate(${mix(1, 0.78)}) contrast(${mix(1, 0.92)}) brightness(${mix(1, 1.06)})`;
+    case "cinematic":
+      return `contrast(${mix(1, 1.25)}) saturate(${mix(1, 0.82)}) brightness(${mix(1, 0.92)})`;
+    default:
+      return "none";
+  }
 }
