@@ -25,7 +25,7 @@ const defaults: StudioSettings = {
   volume: 25, autoCreate: false,
 };
 
-export function StudioControls({ projectId, ranking = false }: { projectId: string; ranking?: boolean }) {
+export function StudioControls({ projectId, ranking = false, clips = [] }: { projectId: string; ranking?: boolean; clips?: { id: string; title: string; number: number | null }[] }) {
   const [settings, setSettings] = useState<StudioSettings>(defaults);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [voicePreviewing, setVoicePreviewing] = useState(false);
@@ -156,6 +156,40 @@ export function StudioControls({ projectId, ranking = false }: { projectId: stri
           filter: getVideoLookFilter(settings.videoLook, settings.lookIntensity),
         }} />
       </label>
+      {clips.length > 0 && (
+        <details className="rounded-xl border border-black/10 p-3 dark:border-white/15">
+          <summary className="cursor-pointer text-sm font-semibold">Individual clip looks ({clips.length})</summary>
+          <p className="my-2 text-xs text-black/50 dark:text-white/50">Optional overrides. Choose Inherit to use the overall filter.</p>
+          <div className="space-y-3">
+            {clips.map(clip => {
+              const custom = settings.clipLooks?.[clip.id];
+              return <div key={clip.id} className="grid gap-2 border-t border-black/10 py-2 dark:border-white/10 sm:grid-cols-[1fr_150px_110px] sm:items-center">
+                <span className="truncate text-xs font-medium">{clip.number != null ? `#${clip.number} · ` : ""}{clip.title}</span>
+                <select aria-label={`Look for ${clip.title}`} value={custom?.look ?? "inherit"}
+                  onChange={event => {
+                    const next = { ...settings.clipLooks };
+                    if (event.target.value === "inherit") delete next[clip.id];
+                    else next[clip.id] = { look: event.target.value as VideoLook, intensity: custom?.intensity ?? 100 };
+                    change({ clipLooks: next });
+                  }} className={input}>
+                  <option value="inherit">Inherit project look</option>
+                  {(Object.entries(VIDEO_LOOKS) as [VideoLook, typeof VIDEO_LOOKS[VideoLook]][]).map(([key, value]) =>
+                    <option key={key} value={key}>{value.label}</option>)}
+                </select>
+                <label className="flex items-center gap-2 text-xs">
+                  <input aria-label={`Intensity for ${clip.title}`} type="range" min={0} max={100}
+                    disabled={!custom} value={custom?.intensity ?? 100}
+                    onChange={event => {
+                      if (!custom) return;
+                      change({ clipLooks: { ...settings.clipLooks, [clip.id]: { ...custom, intensity: Number(event.target.value) } } });
+                    }} className="w-full accent-amber-400" />
+                  <span className="w-8 tabular-nums">{custom?.intensity ?? "—"}</span>
+                </label>
+              </div>;
+            })}
+          </div>
+        </details>
+      )}
       <label className="block space-y-1 text-sm">
         <span className="font-medium">Voiceover script</span>
         <textarea rows={settings.mode === "advanced" ? 6 : 3} value={settings.script}
