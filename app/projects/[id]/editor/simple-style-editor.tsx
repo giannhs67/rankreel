@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useLoadFont } from "@/lib/use-load-font";
 import { CURATED_GOOGLE_FONTS } from "@/remotion/ranking-config";
@@ -40,12 +40,12 @@ export function SimpleStyleEditor({
   const modified = useRef(false);
   // Serialize writes so a slower older save cannot overwrite the newest style.
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
-  function saveInOrder(nextConfig: typeof config) {
+  const saveInOrder = useCallback((nextConfig: typeof config) => {
     const next = saveQueue.current.catch(() => undefined)
       .then(() => updateTemplateConfig(projectId, templateId, nextConfig));
     saveQueue.current = next;
     return next;
-  }
+  }, [projectId, templateId]);
   // Only save intentional edits, not the initial config or an applied template.
   useEffect(() => {
     if (!modified.current) return;
@@ -60,7 +60,7 @@ export function SimpleStyleEditor({
       }
     }, 900);
     return () => window.clearTimeout(timer);
-  }, [config, projectId, templateId]);
+  }, [config, saveInOrder]);
 
 
   useLoadFont(
