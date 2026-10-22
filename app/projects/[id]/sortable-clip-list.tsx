@@ -14,6 +14,7 @@ export function SortableClipList({ projectId, clips, ranking = false }: { projec
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [lastMove, setLastMove] = useState<{ clipId: string; from: number; to: number } | null>(null);
+  const [redoMove, setRedoMove] = useState<{ clipId: string; from: number; to: number } | null>(null);
   const [lastRanks, setLastRanks] = useState<{ id: string; number: number | null }[] | null>(null);
 
   function reorder(clipId: string, targetIndex: number) {
@@ -22,7 +23,7 @@ export function SortableClipList({ projectId, clips, ranking = false }: { projec
       try {
         const from = clips.findIndex(clip => clip.id === clipId);
         await moveClipToPosition(projectId, clipId, targetIndex);
-        if (from !== targetIndex) setLastMove({ clipId, from, to: targetIndex });
+        if (from !== targetIndex) { setLastMove({ clipId, from, to: targetIndex }); setRedoMove(null); }
         router.refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not reorder clips.");
@@ -36,9 +37,25 @@ export function SortableClipList({ projectId, clips, ranking = false }: { projec
     startTransition(async () => {
       try {
         await moveClipToPosition(projectId, lastMove.clipId, lastMove.from);
+        setRedoMove(lastMove);
         setLastMove(null);
         router.refresh();
       } catch (err) { setError(err instanceof Error ? err.message : "Could not undo move."); }
+    });
+  }
+
+  function redoLastMove() {
+    if (!redoMove) return;
+    setError(null);
+    startTransition(async () => {
+      try {
+        await moveClipToPosition(projectId, redoMove.clipId, redoMove.to);
+        setLastMove(redoMove);
+        setRedoMove(null);
+        router.refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not redo move.");
+      }
     });
   }
 
@@ -76,6 +93,8 @@ export function SortableClipList({ projectId, clips, ranking = false }: { projec
           className="rounded-lg border border-black/15 px-3 py-2 text-xs disabled:opacity-40 dark:border-white/15">Undo ranks</button>}
         <button type="button" onClick={undoMove} disabled={pending || !lastMove}
           className="rounded-lg border border-black/15 px-3 py-2 text-xs disabled:opacity-40 dark:border-white/15">Undo last move</button>
+        <button type="button" onClick={redoLastMove} disabled={pending || !redoMove}
+          className="rounded-lg border border-black/15 px-3 py-2 text-xs disabled:opacity-40 dark:border-white/15">Redo move</button>
       </div>
       <p className="text-xs text-black/50 dark:text-white/50">
         Drag clips on desktop or select positions on mobile. Smart Ranking numbers clips in playback order without changing files.
