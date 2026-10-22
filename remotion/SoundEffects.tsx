@@ -2,8 +2,11 @@ import { Audio, Sequence, useVideoConfig } from "remotion";
 import type { StudioRenderSettings } from "@/shared/studio-settings";
 import type { SoundEffectKind } from "@/shared/sound-effects";
 
+const wavCache: Partial<Record<SoundEffectKind, string>> = {};
+
 /** Small deterministic generated PCM WAV cues; no external service, license, or asset requests. */
 function cueDataUrl(kind: SoundEffectKind): string {
+  if (wavCache[kind]) return wavCache[kind];
   const hz = 16000, seconds = kind === "chime" ? 0.48 : 0.24;
   const samples = Math.floor(hz * seconds);
   const bytes = new Uint8Array(44 + samples * 2);
@@ -26,7 +29,9 @@ function cueDataUrl(kind: SoundEffectKind): string {
   for (let i = 0; i < bytes.length; i += 8192) {
     binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
   }
-  return "data:audio/wav;base64," + btoa(binary);
+  const url = "data:audio/wav;base64," + btoa(binary);
+  wavCache[kind] = url;
+  return url;
 }
 
 export function SoundEffects({ settings }: { settings?: StudioRenderSettings }) {
