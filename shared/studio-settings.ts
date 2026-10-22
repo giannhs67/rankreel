@@ -1,3 +1,4 @@
+import { parseTimedCaptions, type TimedCaption } from "./timed-captions";
 import { parseSoundCues, type SoundCue } from "./sound-effects";
 import { parseMusicTrack, type MusicTrack } from "./music-track";
 import { VIDEO_LOOKS, type VideoLook } from "./video-looks";
@@ -13,6 +14,7 @@ export type StudioRenderSettings = {
   music: boolean;
   musicTrack?: MusicTrack | null;
   soundCues?: SoundCue[];
+  timedCaptions?: TimedCaption[];
   transitions: "cut" | "fade" | "zoom";
   captionStyle: "bold" | "minimal" | "karaoke";
   volume: number;
@@ -55,7 +57,7 @@ export function parseStudioSettings(value: unknown): StudioRenderSettings | null
   return {
     cropMode, cropZoom, overlayText,
     videoLook, lookIntensity, clipLooks,
-    captions: v.captions, music: v.music, musicTrack, soundCues: parseSoundCues(v.soundCues),
+    captions: v.captions, music: v.music, musicTrack, soundCues: parseSoundCues(v.soundCues), timedCaptions: parseTimedCaptions(v.timedCaptions),
     transitions: v.transitions as StudioRenderSettings["transitions"],
     captionStyle: v.captionStyle as StudioRenderSettings["captionStyle"],
     volume: v.volume, script: v.script,
