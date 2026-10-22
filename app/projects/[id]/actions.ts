@@ -267,3 +267,62 @@ export async function changeProjectFormat(
   revalidatePath(`/projects/${projectId}/editor`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
+
+/** Assign countdown numbers 6,5,.. according to the chosen playback order.
+ * Existing video files, trims and positions are never modified.
+ */
+export async function arrangeRankingNumbers(projectId: string) {
+  const { supabase } = await requireUser();
+  const { data: project } = await supabase.from("projects").select("format").eq("id", projectId).single();
+  if (project?.format !== "ranking_list") throw new Error("Use this in a ranking project.");
+  const { data: clips, error } = await supabase.from("clips")
+    .select("id, number").eq("project_id", projectId).order("order_index", { ascending: true });
+  if (error || !clips) throw new Error(error?.message ?? "Cannot load clips.");
+  if (clips.length > 6) throw new Error("Ranking supports up to 6 clips.");
+  const previous = clips.map(clip => ({ id: clip.id, number: clip.number }));
+
+  // Set to null before assigning new numbers to avoid a temporary duplicate rank.
+  for (const clip of clips) {
+    const { error: clearError } = await supabase.from("clips")
+      .update({ number: null }).eq("project_id", projectId).eq("id", clip.id);
+    if (clearError) throw new Error(clearError.message);
+  }
+  for (let i = 0; i < clips.length; i++) {
+    const { error: updateError } = await supabase.from("clips")
+      .update({ number: 6 - i }).eq("project_id", projectId).eq("id", clips[i].id);
+    if (updateError) throw new Error(updateError.message);
+  }
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/preview`);
+  return previous;
+}
+
+/** Restore the previous ranks from an explicit user Undo operation. */
+export async function restoreRankingNumbers(
+  projectId: string, saved: { id: string; number: number | null }[],
+) {
+  if (saved.length > 6 || saved.some(item => !item.id || (
+    item.number !== null && (!Number.isInteger(item.number) || item.number < 1 || item.number > 6)
+  ))) throw new Error("Invalid ranking history.");
+  const numbers = saved.map(item => item.number).filter((x): x is number => x !== null);
+  if (new Set(numbers).size !== numbers.length) throw new Error("Duplicate ranking numbers.");
+  const { supabase } = await requireUser();
+  const { data: rows, error } = await supabase.from("clips").select("id")
+    .eq("project_id", projectId);
+  if (error || !rows) throw new Error("Cannot load clips.");
+  if (rows.length !== saved.length || rows.some(row => !saved.some(item => item.id === row.id))) {
+    throw new Error("Ranking changed since this undo was created. Refresh before retrying.");
+  }
+  for (const item of saved) {
+    const { error: clearError } = await supabase.from("clips")
+      .update({ number: null }).eq("project_id", projectId).eq("id", item.id);
+    if (clearError) throw new Error(clearError.message);
+  }
+  for (const item of saved) {
+    const { error: updateError } = await supabase.from("clips")
+      .update({ number: item.number }).eq("project_id", projectId).eq("id", item.id);
+    if (updateError) throw new Error(updateError.message);
+  }
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
