@@ -15,7 +15,7 @@ import { resolveCaptionConfig } from "@/remotion/caption-config";
 
 function captionBackgroundToPicker(value: string): { accentColor: string; captionOpacity: number } {
   if (/^#[0-9a-fA-F]{6}$/.test(value)) return { accentColor: value, captionOpacity: 100 };
-  const match = value.match(/^rgba?\\(\\s*(\\d{1,3})\\s*,\\s*(\\d{1,3})\\s*,\\s*(\\d{1,3})(?:\\s*,\\s*(0?\\.\\d+|1(?:\\.0+)?|0))?\\s*\\)$/);
+  const match = value.match(/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*(0?\.\d+|1(?:\.0+)?|0))?\s*\)$/);
   if (!match) return { accentColor: "#000000", captionOpacity: 65 };
   const rgb = match.slice(1, 4).map(v => Math.max(0, Math.min(255, Number(v))).toString(16).padStart(2, "0")).join("");
   return { accentColor: "#" + rgb, captionOpacity: Math.round(Number(match[4] ?? 1) * 100) };
