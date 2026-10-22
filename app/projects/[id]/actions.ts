@@ -363,3 +363,29 @@ export async function splitScene(projectId: string, clipId: string, splitAt: num
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
+
+/** Reuse a video already uploaded within the same owned project. No duplicate upload needed. */
+export async function reuseProjectMedia(projectId: string, clipId: string) {
+  const { supabase, user } = await requireUser();
+  const { data: project } = await supabase.from("projects").select("format")
+    .eq("id", projectId).eq("owner_id", user.id).single();
+  if (!project) throw new Error("Project not found.");
+  const { data: scenes, error } = await supabase.from("clips")
+    .select("id, title, storage_path, trim_start, trim_end, order_index")
+    .eq("project_id", projectId).order("order_index", { ascending: true });
+  if (error || !scenes) throw new Error(error?.message ?? "Media unavailable.");
+  if (project.format === "ranking_list" && scenes.length >= 6) {
+    throw new Error("Ranking supports at most six positions.");
+  }
+  const original = scenes.find(scene => scene.id === clipId);
+  if (!original) throw new Error("Media not found.");
+  const { error: addError } = await supabase.from("clips").insert({
+    owner_id: user.id, project_id: projectId, storage_path: original.storage_path,
+    title: original.title + " (reused)", number: null,
+    trim_start: original.trim_start, trim_end: original.trim_end,
+    order_index: Math.max(0, ...scenes.map(scene => scene.order_index)) + 1,
+  });
+  if (addError) throw new Error(addError.message);
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
