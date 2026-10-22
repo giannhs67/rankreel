@@ -26,12 +26,19 @@ export async function updateTemplateConfig(
   templateId: string,
   config: AnyTemplateConfig,
 ) {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  const { data: project, error: projectError } = await supabase.from("projects")
+    .select("template_id").eq("id", projectId).eq("owner_id", user.id).single();
+  if (projectError || !project || project.template_id !== templateId) {
+    throw new Error("This template is not attached to your project.");
+  }
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("templates")
     .update({ config_json: config })
-    .eq("id", templateId);
+    .eq("id", templateId).eq("owner_id", user.id)
+    .select("id");
+  if (!error && !updated?.length) throw new Error("Template not found.");
 
   if (error) throw new Error(error.message);
 
@@ -49,6 +56,9 @@ export async function saveAsTemplate(
 
   const trimmedName = name.trim();
   if (!trimmedName) throw new Error("Template name is required.");
+  const { data: project } = await supabase.from("projects").select("id")
+    .eq("id", projectId).eq("owner_id", user.id).single();
+  if (!project) throw new Error("Project not found.");
 
   const { error } = await supabase.from("templates").insert({
     owner_id: user.id,
@@ -68,12 +78,17 @@ export async function applyTemplate(
   currentTemplateId: string,
   sourceTemplateId: string,
 ): Promise<RankingListConfig> {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  const { data: project } = await supabase.from("projects").select("template_id, format")
+    .eq("id", projectId).eq("owner_id", user.id).single();
+  if (!project || project.template_id !== currentTemplateId || project.format !== "ranking_list") {
+    throw new Error("Ranking project or active template not found.");
+  }
 
   const { data: source, error: sourceError } = await supabase
     .from("templates")
     .select("config_json")
-    .eq("id", sourceTemplateId)
+    .eq("id", sourceTemplateId).eq("owner_id", user.id).eq("format", "ranking_list")
     .single();
 
   if (sourceError || !source) throw new Error(sourceError?.message ?? "Template not found.");
@@ -83,7 +98,7 @@ export async function applyTemplate(
   const { error } = await supabase
     .from("templates")
     .update({ config_json: resolved })
-    .eq("id", currentTemplateId);
+    .eq("id", currentTemplateId).eq("owner_id", user.id);
 
   if (error) throw new Error(error.message);
 
