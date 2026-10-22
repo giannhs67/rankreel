@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useLoadFont } from "@/lib/use-load-font";
 import { CURATED_GOOGLE_FONTS, type RankingListConfig } from "@/remotion/ranking-config";
@@ -39,6 +39,23 @@ export function TemplateEditor({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const modified = useRef(false);
+  // Only save intentional edits, not the initial config or an applied template.
+  useEffect(() => {
+    if (!modified.current) return;
+    const timer = window.setTimeout(async () => {
+      try {
+        setSaveState("saving");
+        await updateTemplateConfig(projectId, templateId, config);
+        setSaveState("saved");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Autosave failed.");
+        setSaveState("error");
+      }
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [config, projectId, templateId]);
+
 
   const [newTemplateName, setNewTemplateName] = useState("");
   const [templateSaveBusy, setTemplateSaveBusy] = useState(false);
@@ -53,6 +70,7 @@ export function TemplateEditor({
     patch: Partial<RankingListConfig[K]>,
   ) {
     setConfig((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
+    modified.current = true;
     setSaveState("idle");
   }
 
@@ -82,6 +100,7 @@ export function TemplateEditor({
 
       const family = `custom-${path.split("/").pop()?.split(".")[0]?.slice(0, 12)}`;
       setCustomFontUrl(signed.signedUrl);
+      modified.current = true;
       setConfig((prev) => ({
         ...prev,
         font: { ...prev.font, source: "custom", customFontPath: path, family },
@@ -128,6 +147,7 @@ export function TemplateEditor({
     setError(null);
     try {
       const applied = await applyTemplate(projectId, templateId, applyTemplateId);
+      modified.current = false;
       setConfig(applied);
 
       if (applied.font.source === "custom" && applied.font.customFontPath) {
