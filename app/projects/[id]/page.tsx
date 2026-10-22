@@ -10,6 +10,7 @@ import { CreatorTools } from "./creator-tools";
 import { MediaLibrary } from "./media-library";
 import { ClipFinder } from "./clip-finder";
 import { ShortsBuilder } from "./shorts-builder";
+import { GrowthLab } from "./growth-lab";
 import { FormatSwitcher } from "./format-switcher";
 import { QuickStyle } from "./quick-style";
 import { resolveRankingConfig } from "@/remotion/ranking-config";
@@ -131,6 +132,7 @@ export default async function ProjectPage({
         <QuickStyle projectId={project.id} format={project.format} initial={quickStyle} />
 
         <ShortsBuilder projectId={project.id} clips={clips ?? []} ranking={project.format === "ranking_list"} />
+        <GrowthLab projectId={project.id} clips={clips ?? []} ranking={project.format === "ranking_list"} />
         <MediaLibrary projectId={project.id} clips={clips ?? []} />
         <ClipFinder projectId={project.id} clips={clips ?? []} ranking={project.format === "ranking_list"} />
 
