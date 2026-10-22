@@ -150,41 +150,73 @@ export function TemplateEditor({
   }
 
   return (
-    <div className="flex flex-col gap-6 md:flex-row">
-      <div className="shrink-0">
-        <KonvaCanvas
-          config={config}
-          fontVersion={fontVersion}
-          onPositionChange={(x, y) => update("position", { x, y })}
-        />
-        <p className="mt-2 max-w-[360px] text-xs text-black/40 dark:text-white/40">
-          Drag the sample text to position the ranking list. Dark area = top zone, black area =
-          where the clip plays.
-        </p>
-      </div>
+    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.95fr)]">
+      <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[#13161e] p-4 shadow-[0_28px_80px_rgba(0,0,0,0.28)] sm:p-6 xl:sticky xl:top-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400">01 / Layout</p>
+            <h2 className="mt-1 text-lg font-semibold tracking-tight">Canvas preview</h2>
+            <p className="mt-1 text-xs text-white/45">Drag the ranking text to reposition it.</p>
+          </div>
+          <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-white/70">9:16 VERTICAL</span>
+        </div>
 
-      <div className="flex-1 space-y-5">
-        <div>
-          <label className="mb-1 block text-sm font-medium">Font</label>
-          <select
-            value={config.font.source === "custom" ? "__custom__" : config.font.googleFont}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value === "__custom__") {
-                fileInputRef.current?.click();
-                return;
-              }
-              update("font", { source: "google", googleFont: value, family: value });
-            }}
-            className="w-full rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/15"
-          >
-            {CURATED_GOOGLE_FONTS.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-            <option value="__custom__">Custom font…</option>
-          </select>
+        <div className="mt-5 flex justify-center overflow-hidden rounded-[24px] border border-white/5 bg-[#090b11] px-2 py-6 sm:px-5">
+          <div className="min-w-0 w-full max-w-[420px] rounded-[24px] border border-white/15 bg-[#040507] p-2.5 shadow-[0_18px_55px_rgba(0,0,0,0.6)]">
+            <KonvaCanvas
+              config={config}
+              fontVersion={fontVersion}
+              onPositionChange={(x, y) => update("position", { x, y })}
+            />
+          </div>
+        </div>
+
+        <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-400/15 bg-amber-400/[0.06] p-4">
+          <span className="shrink-0 rounded-lg bg-amber-400/15 px-2.5 py-1 text-[10px] font-bold tracking-wide text-amber-300">DRAG</span>
+          <p className="text-xs leading-5 text-white/60">
+            This is a layout preview, not your final footage. The dark lower area will be replaced by uploaded video in the actual preview and MP4.
+          </p>
+        </div>
+      </section>
+
+      <section className="space-y-5 rounded-[28px] border border-white/10 bg-[#13161e] p-4 shadow-[0_28px_80px_rgba(0,0,0,0.2)] sm:p-6">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400">02 / Customization</p>
+            <h2 className="mt-1 text-xl font-bold tracking-tight">Design controls</h2>
+            <p className="mt-1 text-xs text-white/45">Changes appear on the canvas immediately.</p>
+          </div>
+          <span className="rounded-full border border-white/10 bg-[#212631] px-3 py-1.5 text-[11px] font-semibold text-white/60">STYLE</span>
+        </div>
+
+        <div className="space-y-5 rounded-2xl border border-white/10 bg-[#0d1017] p-4 sm:p-5">
+          <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-amber-400/10 text-xs font-bold text-amber-400">01</span>
+            <div>
+              <h3 className="text-sm font-semibold">Typography</h3>
+              <p className="text-xs text-white/40">Font, size and text outline</p>
+            </div>
+          </div>
+          <label className="block space-y-2 text-xs font-medium text-white/70">
+            <span>Font family</span>
+            <select
+              value={config.font.source === "custom" ? "__custom__" : config.font.googleFont}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "__custom__") {
+                  fileInputRef.current?.click();
+                  return;
+                }
+                update("font", { source: "google", googleFont: value, family: value });
+              }}
+              className="w-full rounded-xl border border-white/10 bg-[#20242e] px-3 py-3 text-sm text-white outline-none transition focus:border-amber-400/70"
+            >
+              {CURATED_GOOGLE_FONTS.map((font) => (
+                <option key={font} value={font}>{font}</option>
+              ))}
+              <option value="__custom__">Upload custom font…</option>
+            </select>
+          </label>
           <input
             ref={fileInputRef}
             type="file"
@@ -197,172 +229,174 @@ export function TemplateEditor({
             }}
           />
           {config.font.source === "custom" && (
-            <p className="mt-1 text-xs text-black/50 dark:text-white/50">
-              {fontUploadBusy ? "Uploading…" : `Using custom font (${config.font.family})`}
+            <p className="text-xs text-white/55">
+              {fontUploadBusy ? "Uploading font…" : "Custom font: " + config.font.family}
             </p>
           )}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Font size ({config.text.fontSize}px)</label>
-            <input
-              type="range"
-              min={24}
-              max={96}
-              value={config.text.fontSize}
-              onChange={(e) => update("text", { fontSize: Number(e.target.value) })}
-              className="w-full"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Stroke width ({config.text.strokeWidth}px)</label>
-            <input
-              type="range"
-              min={0}
-              max={8}
-              value={config.text.strokeWidth}
-              onChange={(e) => update("text", { strokeWidth: Number(e.target.value) })}
-              className="w-full"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Text color</label>
-            <input
-              type="color"
-              value={config.text.baseColor}
-              onChange={(e) => update("text", { baseColor: e.target.value })}
-              className="h-9 w-full rounded-md border border-black/15 dark:border-white/15"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Current-item color</label>
-            <input
-              type="color"
-              value={config.text.currentColor}
-              onChange={(e) => update("text", { currentColor: e.target.value })}
-              className="h-9 w-full rounded-md border border-black/15 dark:border-white/15"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Stroke color</label>
-            <input
-              type="color"
-              value={config.text.strokeColor}
-              onChange={(e) => update("text", { strokeColor: e.target.value })}
-              className="h-9 w-full rounded-md border border-black/15 dark:border-white/15"
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block space-y-3 text-xs font-medium text-white/70">
+              <span className="flex items-center justify-between gap-2"><span>Font size</span><strong className="tabular-nums text-amber-300">{config.text.fontSize}px</strong></span>
+              <input
+                type="range"
+                min={24}
+                max={96}
+                value={config.text.fontSize}
+                onChange={(e) => update("text", { fontSize: Number(e.target.value) })}
+                className="w-full accent-amber-400"
+              />
+            </label>
+            <label className="block space-y-3 text-xs font-medium text-white/70">
+              <span className="flex items-center justify-between gap-2"><span>Outline width</span><strong className="tabular-nums text-amber-300">{config.text.strokeWidth}px</strong></span>
+              <input
+                type="range"
+                min={0}
+                max={8}
+                value={config.text.strokeWidth}
+                onChange={(e) => update("text", { strokeWidth: Number(e.target.value) })}
+                className="w-full accent-amber-400"
+              />
+            </label>
           </div>
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Entrance animation</label>
-          <div className="flex gap-2">
-            <select
-              value={config.animation.type}
-              onChange={(e) =>
-                update("animation", {
-                  type: e.target.value as RankingListConfig["animation"]["type"],
-                })
-              }
-              className="flex-1 rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm capitalize dark:border-white/15"
-            >
-              {ANIMATIONS.map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-            </select>
-            <input
-              type="number"
-              min={1}
-              max={60}
-              value={config.animation.durationInFrames}
-              onChange={(e) =>
-                update("animation", { durationInFrames: Number(e.target.value) })
-              }
-              className="w-24 rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/15"
-              title="Duration in frames (30fps)"
-            />
+        <div className="space-y-4 rounded-2xl border border-white/10 bg-[#0d1017] p-4 sm:p-5">
+          <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-amber-400/10 text-xs font-bold text-amber-400">02</span>
+            <div>
+              <h3 className="text-sm font-semibold">Color palette</h3>
+              <p className="text-xs text-white/40">Give each ranking a consistent look</p>
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="block space-y-2 text-xs font-medium text-white/70">
+              <span>Base text</span>
+              <input
+                type="color"
+                value={config.text.baseColor}
+                onChange={(e) => update("text", { baseColor: e.target.value })}
+                className="h-12 w-full cursor-pointer rounded-xl border border-white/15 bg-[#20242e] p-1.5"
+              />
+            </label>
+            <label className="block space-y-2 text-xs font-medium text-white/70">
+              <span>Active rank</span>
+              <input
+                type="color"
+                value={config.text.currentColor}
+                onChange={(e) => update("text", { currentColor: e.target.value })}
+                className="h-12 w-full cursor-pointer rounded-xl border border-white/15 bg-[#20242e] p-1.5"
+              />
+            </label>
+            <label className="block space-y-2 text-xs font-medium text-white/70">
+              <span>Outline</span>
+              <input
+                type="color"
+                value={config.text.strokeColor}
+                onChange={(e) => update("text", { strokeColor: e.target.value })}
+                className="h-12 w-full cursor-pointer rounded-xl border border-white/15 bg-[#20242e] p-1.5"
+              />
+            </label>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 pt-2">
+        <div className="space-y-4 rounded-2xl border border-white/10 bg-[#0d1017] p-4 sm:p-5">
+          <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-amber-400/10 text-xs font-bold text-amber-400">03</span>
+            <div>
+              <h3 className="text-sm font-semibold">Entrance animation</h3>
+              <p className="text-xs text-white/40">Choose how the ranking text appears</p>
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
+            <label className="block space-y-2 text-xs font-medium text-white/70">
+              <span>Effect</span>
+              <select
+                value={config.animation.type}
+                onChange={(e) => update("animation", { type: e.target.value as RankingListConfig["animation"]["type"] })}
+                className="w-full rounded-xl border border-white/10 bg-[#20242e] px-3 py-3 text-sm capitalize text-white outline-none focus:border-amber-400/70"
+              >
+                {ANIMATIONS.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </label>
+            <label className="block space-y-2 text-xs font-medium text-white/70">
+              <span>Frames (30 fps)</span>
+              <input
+                type="number"
+                min={1}
+                max={60}
+                value={config.animation.durationInFrames}
+                onChange={(e) => update("animation", { durationInFrames: Number(e.target.value) })}
+                className="w-full rounded-xl border border-white/10 bg-[#20242e] px-3 py-3 text-sm text-white outline-none focus:border-amber-400/70"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="space-y-2">
           <button
             type="button"
             onClick={handleSave}
             disabled={saveState === "saving"}
-            className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-60"
+            className="w-full rounded-xl bg-[#facc15] px-5 py-3.5 text-sm font-bold text-[#121212] transition hover:bg-amber-300 disabled:cursor-wait disabled:opacity-60"
           >
-            {saveState === "saving" ? "Saving…" : "Save changes"}
+            {saveState === "saving" ? "Saving design…" : saveState === "saved" ? "✓ Design saved" : "Save design"}
           </button>
-          {saveState === "saved" && (
-            <span className="text-sm text-green-600 dark:text-green-400">Saved.</span>
-          )}
-          {error && <span className="text-sm text-red-600 dark:text-red-400">{error}</span>}
+          {saveState === "saved" && <p role="status" className="text-center text-xs text-emerald-400">Saved to this project.</p>}
+          {error && <p role="alert" className="rounded-lg bg-red-400/10 p-3 text-sm text-red-300">{error}</p>}
+          <p className="text-center text-xs text-white/40">Save before opening Video preview or exporting your MP4.</p>
         </div>
 
-        <div className="space-y-3 border-t border-black/10 pt-5 dark:border-white/10">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
-            Templates
-          </h2>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">Save this look as a template</label>
-            <div className="flex gap-2">
-              <input
-                value={newTemplateName}
-                onChange={(e) => setNewTemplateName(e.target.value)}
-                placeholder="Template name, e.g. Neon Countdown"
-                className="flex-1 rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/15"
-              />
-              <button
-                type="button"
-                onClick={handleSaveAsTemplate}
-                disabled={templateSaveBusy || !newTemplateName.trim()}
-                className="shrink-0 rounded-md border border-black/15 px-4 py-2 text-sm disabled:opacity-60 dark:border-white/15"
-              >
-                {templateSaveBusy ? "Saving…" : "Save as template"}
-              </button>
-            </div>
-            {templateSaveMessage && (
-              <p className="mt-1 text-sm text-green-600 dark:text-green-400">{templateSaveMessage}</p>
-            )}
-          </div>
-
-          {savedTemplates.length > 0 && (
+        <div className="space-y-4 rounded-2xl border border-white/10 bg-[#0d1017] p-4 sm:p-5">
+          <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-amber-400/10 text-xs font-bold text-amber-400">04</span>
             <div>
-              <label className="mb-1 block text-sm font-medium">Apply a saved template</label>
-              <div className="flex gap-2">
+              <h3 className="text-sm font-semibold">Reusable templates</h3>
+              <p className="text-xs text-white/40">Save a style for future ranking videos</p>
+            </div>
+          </div>
+          <label className="block space-y-2 text-xs font-medium text-white/70">
+            <span>Template name</span>
+            <input
+              value={newTemplateName}
+              onChange={(e) => setNewTemplateName(e.target.value)}
+              placeholder="e.g. Yellow Countdown"
+              className="w-full rounded-xl border border-white/10 bg-[#20242e] px-3 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-amber-400/70"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={handleSaveAsTemplate}
+            disabled={templateSaveBusy || !newTemplateName.trim()}
+            className="w-full rounded-xl border border-white/15 bg-[#20242e] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#303642] disabled:opacity-40"
+          >
+            {templateSaveBusy ? "Saving template…" : "Save as template"}
+          </button>
+          {templateSaveMessage && <p role="status" className="text-xs text-emerald-400">{templateSaveMessage}</p>}
+          {savedTemplates.length > 0 && (
+            <div className="space-y-3 border-t border-white/10 pt-4">
+              <label className="block space-y-2 text-xs font-medium text-white/70">
+                <span>Load saved template</span>
                 <select
                   value={applyTemplateId}
                   onChange={(e) => setApplyTemplateId(e.target.value)}
-                  className="flex-1 rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/15"
+                  className="w-full rounded-xl border border-white/10 bg-[#20242e] px-3 py-3 text-sm text-white outline-none focus:border-amber-400/70"
                 >
                   <option value="">Choose a template…</option>
-                  {savedTemplates.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
+                  {savedTemplates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
-                <button
-                  type="button"
-                  onClick={handleApplyTemplate}
-                  disabled={applyBusy || !applyTemplateId}
-                  className="shrink-0 rounded-md border border-black/15 px-4 py-2 text-sm disabled:opacity-60 dark:border-white/15"
-                >
-                  {applyBusy ? "Applying…" : "Apply"}
-                </button>
-              </div>
-              <p className="mt-1 text-xs text-black/40 dark:text-white/40">
-                Applies and saves immediately to this project — further tweaks below still need
-                their own &quot;Save changes&quot;.
-              </p>
+              </label>
+              <button
+                type="button"
+                onClick={handleApplyTemplate}
+                disabled={applyBusy || !applyTemplateId}
+                className="w-full rounded-xl border border-white/15 bg-[#20242e] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#303642] disabled:opacity-40"
+              >
+                {applyBusy ? "Applying…" : "Apply template"}
+              </button>
+              <p className="text-xs leading-5 text-white/40">Applying a template saves it immediately. Further adjustments need Save design.</p>
             </div>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }
