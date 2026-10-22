@@ -4,7 +4,7 @@ import { clipFramesFor, getClipStartFrames, getCurrentClipIndex, getTotalDuratio
 import { entranceStyle } from "./entrance-style";
 import { trimStartFrame } from "../shared/trim-window.mjs";
 import type { StudioRenderSettings } from "@/shared/studio-settings";
-import { getVideoLookFilter } from "@/shared/video-looks";
+import { getClipVideoFilter } from "@/shared/video-looks";
 
 export type TitleBannerClip = {
   id: string;
@@ -58,7 +58,7 @@ export function TitleBanner({ clips, config = DEFAULT_TITLE_BANNER_CONFIG, studi
         {clips.map((clip) => (
           <Series.Sequence key={clip.id} durationInFrames={clipFramesFor(clip.durationInSeconds, fps)}>
             <AbsoluteFill>
-              <Video src={clip.videoUrl} startFrom={trimStartFrame(clip, fps)} style={{ width: "100%", height: "100%", objectFit: "cover", filter: getVideoLookFilter(studioSettings?.videoLook) }} />
+              <Video src={clip.videoUrl} startFrom={trimStartFrame(clip, fps)} style={{ width: "100%", height: "100%", objectFit: "cover", filter: getClipVideoFilter(studioSettings, clip.id) }} />
             </AbsoluteFill>
           </Series.Sequence>
         ))}
