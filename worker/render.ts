@@ -76,7 +76,7 @@ export async function renderCompositionLocally(params: {
         composition,
         serveUrl,
         codec: "h264",
-        crf: 23,
+        crf: params.qualityPreset === "high" ? 18 : params.qualityPreset === "small" ? 28 : 23,
         outputLocation,
         inputProps: params.inputProps,
         puppeteerInstance,
