@@ -1,3 +1,4 @@
+import { parseSoundCues, type SoundCue } from "./sound-effects";
 import { parseMusicTrack, type MusicTrack } from "./music-track";
 import { VIDEO_LOOKS, type VideoLook } from "./video-looks";
 
@@ -11,6 +12,7 @@ export type StudioRenderSettings = {
   captions: boolean;
   music: boolean;
   musicTrack?: MusicTrack | null;
+  soundCues?: SoundCue[];
   transitions: "cut" | "fade" | "zoom";
   captionStyle: "bold" | "minimal" | "karaoke";
   volume: number;
@@ -53,7 +55,7 @@ export function parseStudioSettings(value: unknown): StudioRenderSettings | null
   return {
     cropMode, cropZoom, overlayText,
     videoLook, lookIntensity, clipLooks,
-    captions: v.captions, music: v.music, musicTrack,
+    captions: v.captions, music: v.music, musicTrack, soundCues: parseSoundCues(v.soundCues),
     transitions: v.transitions as StudioRenderSettings["transitions"],
     captionStyle: v.captionStyle as StudioRenderSettings["captionStyle"],
     volume: v.volume, script: v.script,
