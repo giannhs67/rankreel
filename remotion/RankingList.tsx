@@ -135,7 +135,7 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
           {clips.map((clip) => (
             <Series.Sequence key={clip.id} durationInFrames={clipFramesFor(clip.durationInSeconds, fps)}>
               <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
-                <Video src={clip.videoUrl} startFrom={trimStartFrame(clip, fps)} style={{ maxWidth: "100%", maxHeight: "100%", filter: getClipVideoFilter(studioSettings, clip.id) }} />
+                <Video src={clip.videoUrl} startFrom={trimStartFrame(clip, fps)} style={{ width: "100%", height: "100%", objectFit: studioSettings?.cropMode === "cover" ? "cover" : "contain", transform: `scale(${(studioSettings?.cropZoom ?? 100) / 100})`, filter: getClipVideoFilter(studioSettings, clip.id) }} />
               </AbsoluteFill>
             </Series.Sequence>
           ))}
@@ -147,6 +147,13 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
       {studioSettings?.captions && current && (
         <AbsoluteFill style={{ pointerEvents: "none", justifyContent: "flex-end", alignItems: "center", paddingBottom: 200 }}>
           <div style={{ maxWidth: "85%", padding: "16px 24px", borderRadius: 14, backgroundColor: studioSettings.captionStyle === "minimal" ? "rgba(0,0,0,.65)" : "#facc15", color: studioSettings.captionStyle === "minimal" ? "#fff" : "#111", fontSize: studioSettings.captionStyle === "minimal" ? 38 : 50, fontWeight: 900, textAlign: "center", textTransform: "uppercase" }}>{current.title}</div>
+        </AbsoluteFill>
+      )}
+      {studioSettings?.overlayText?.trim() && (
+        <AbsoluteFill style={{ pointerEvents: "none", justifyContent: "flex-start", alignItems: "center", paddingTop: 125 }}>
+          <div style={{ color: "#fff", backgroundColor: "rgba(0,0,0,.72)", borderRadius: 16, fontSize: 54, fontWeight: 900, padding: "14px 30px", maxWidth: "88%", textAlign: "center", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+            {studioSettings.overlayText}
+          </div>
         </AbsoluteFill>
       )}
     </AbsoluteFill>
