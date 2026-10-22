@@ -56,6 +56,7 @@ export async function POST(request: Request) {
   }
 
   const format = project.format as CompositionFormat;
+  const qualityPreset = body?.qualityPreset === "high" || body?.qualityPreset === "small" ? body.qualityPreset as "high" | "small" : "balanced" as const;
   const studioSettings = parseStudioSettings(body?.studioSettings);
   if (body?.studioSettings != null && !studioSettings) {
     return NextResponse.json({ error: "Invalid studio settings" }, { status: 400 });
@@ -101,7 +102,7 @@ export async function POST(request: Request) {
     ? { ...renderProps, studioSettings }
     : renderProps;
   renderQueue = renderQueue.then(() =>
-    runRender(format, projectId, job.id, propsWithSettings).catch((err) => {
+    runRender(format, projectId, job.id, propsWithSettings, qualityPreset).catch((err) => {
       console.error(`[render] job ${job.id} failed:`, err);
     }),
   );
@@ -114,6 +115,7 @@ async function runRender(
   projectId: string,
   jobId: string,
   renderProps: { projectName: string; clips: unknown[]; config: unknown; studioSettings?: StudioRenderSettings },
+  qualityPreset: "high" | "balanced" | "small",
 ) {
   const supabase = await createClient();
 
@@ -134,6 +136,7 @@ async function runRender(
       projectId,
       jobId,
       inputProps,
+      qualityPreset,
       onProgress: (progress) => {
         if (progress - lastWrittenProgress < 0.05 && progress < 1) return;
         lastWrittenProgress = progress;
