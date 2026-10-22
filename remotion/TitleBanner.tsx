@@ -2,12 +2,14 @@ import { AbsoluteFill, Series, Video, useCurrentFrame, useVideoConfig } from "re
 import { DEFAULT_TITLE_BANNER_CONFIG, type TitleBannerConfig } from "./title-banner-config";
 import { clipFramesFor, getClipStartFrames, getCurrentClipIndex, getTotalDurationInFrames } from "./clip-timing";
 import { entranceStyle } from "./entrance-style";
+import { trimStartFrame } from "../shared/trim-window.mjs";
 
 export type TitleBannerClip = {
   id: string;
   title: string;
   videoUrl: string;
   durationInSeconds: number;
+  trimStartInSeconds: number;
 };
 
 export type TitleBannerProps = {
@@ -45,7 +47,7 @@ export function TitleBanner({ clips, config = DEFAULT_TITLE_BANNER_CONFIG }: Tit
         {clips.map((clip) => (
           <Series.Sequence key={clip.id} durationInFrames={clipFramesFor(clip.durationInSeconds, fps)}>
             <AbsoluteFill>
-              <Video src={clip.videoUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <Video src={clip.videoUrl} startFrom={trimStartFrame(clip, fps)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </AbsoluteFill>
           </Series.Sequence>
         ))}
