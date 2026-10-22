@@ -11,6 +11,6 @@ export function BackgroundMusic({ settings }: { settings?: StudioRenderSettings 
   const duration = Math.min(end - start, durationInFrames - from);
   if (duration <= 0) return null;
   return <Sequence from={from} durationInFrames={duration} layout="none">
-    <Audio src={track.url} startFrom={start} endAt={end} volume={settings.volume / 100} />
+    <Audio src={track.url} startFrom={start} endAt={end} volume={(settings.volume / 100) * (settings.audioDucking && settings.script.trim() ? (settings.duckingLevel ?? 25) / 100 : 1)} />
   </Sequence>;
 }
