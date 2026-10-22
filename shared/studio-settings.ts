@@ -2,6 +2,8 @@ import { VIDEO_LOOKS, type VideoLook } from "./video-looks";
 
 export type StudioRenderSettings = {
   videoLook: VideoLook;
+  lookIntensity: number;
+  clipLooks: Record<string, { look: VideoLook; intensity: number }>;
   captions: boolean;
   music: boolean;
   transitions: "cut" | "fade" | "zoom";
@@ -25,8 +27,20 @@ export function parseStudioSettings(value: unknown): StudioRenderSettings | null
     Object.prototype.hasOwnProperty.call(VIDEO_LOOKS, v.videoLook)
     ? v.videoLook as VideoLook
     : "original";
+  const lookIntensity = typeof v.lookIntensity === "number" && Number.isFinite(v.lookIntensity)
+    ? Math.max(0, Math.min(100, v.lookIntensity)) : 100;
+  const clipLooks: StudioRenderSettings["clipLooks"] = {};
+  if (v.clipLooks && typeof v.clipLooks === "object" && !Array.isArray(v.clipLooks)) {
+    for (const [id, entry] of Object.entries(v.clipLooks as Record<string, unknown>).slice(0, 200)) {
+      if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id) || !entry || typeof entry !== "object") continue;
+      const value = entry as Record<string, unknown>;
+      if (typeof value.look !== "string" || !Object.prototype.hasOwnProperty.call(VIDEO_LOOKS, value.look)) continue;
+      if (typeof value.intensity !== "number" || !Number.isFinite(value.intensity)) continue;
+      clipLooks[id] = { look: value.look as VideoLook, intensity: Math.max(0, Math.min(100, value.intensity)) };
+    }
+  }
   return {
-    videoLook,
+    videoLook, lookIntensity, clipLooks,
     captions: v.captions, music: v.music,
     transitions: v.transitions as StudioRenderSettings["transitions"],
     captionStyle: v.captionStyle as StudioRenderSettings["captionStyle"],
