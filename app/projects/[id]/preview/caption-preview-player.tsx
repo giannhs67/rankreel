@@ -3,9 +3,11 @@
 import { Player } from "@remotion/player";
 import { Caption, getCaptionMetadata, type CaptionProps } from "@/remotion/Caption";
 import { useLoadFont } from "@/lib/use-load-font";
+import { useStudioPreviewSettings } from "@/lib/use-studio-preview-settings";
 
 export function CaptionPreviewPlayer(props: CaptionProps & { customFontUrl: string | null }) {
   const { customFontUrl, ...playerProps } = props;
+  const studioSettings = useStudioPreviewSettings();
   const { fps, durationInFrames, width, height } = getCaptionMetadata(playerProps);
 
   useLoadFont(
@@ -25,7 +27,7 @@ export function CaptionPreviewPlayer(props: CaptionProps & { customFontUrl: stri
     >
       <Player
         component={Caption}
-        inputProps={playerProps}
+        inputProps={{ ...playerProps, ...(studioSettings ? { studioSettings } : {}) }}
         durationInFrames={durationInFrames}
         fps={fps}
         compositionWidth={width}
