@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useLoadFont } from "@/lib/use-load-font";
 import { CURATED_GOOGLE_FONTS } from "@/remotion/ranking-config";
@@ -37,6 +37,23 @@ export function SimpleStyleEditor({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const modified = useRef(false);
+  // Only save intentional edits, not the initial config or an applied template.
+  useEffect(() => {
+    if (!modified.current) return;
+    const timer = window.setTimeout(async () => {
+      try {
+        setSaveState("saving");
+        await updateTemplateConfig(projectId, templateId, config);
+        setSaveState("saved");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Autosave failed.");
+        setSaveState("error");
+      }
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [config, projectId, templateId]);
+
 
   useLoadFont(
     {
@@ -50,6 +67,7 @@ export function SimpleStyleEditor({
 
   function update<K extends keyof Config>(key: K, patch: Partial<Config[K]>) {
     setConfig((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
+    modified.current = true;
     setSaveState("idle");
   }
 
@@ -79,6 +97,7 @@ export function SimpleStyleEditor({
 
       const family = `custom-${path.split("/").pop()?.split(".")[0]?.slice(0, 12)}`;
       setCustomFontUrl(signed.signedUrl);
+      modified.current = true;
       setConfig((prev) => ({
         ...prev,
         font: { ...prev.font, source: "custom", customFontPath: path, family },
