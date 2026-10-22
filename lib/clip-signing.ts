@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveTrimWindow } from "@/shared/trim-window.mjs";
 
 // Fallback only for clips uploaded before duration capture existed (trim_start/trim_end unset).
 const DEFAULT_CLIP_SECONDS = 4;
@@ -12,6 +13,7 @@ export type SignedClip = {
   number: number | null;
   videoUrl: string;
   durationInSeconds: number;
+  trimStartInSeconds: number;
 };
 
 /** Every clip in a project, each with a fresh signed Storage URL and its real (or best-guess) duration. */
@@ -32,10 +34,7 @@ export async function getSignedClipsForProject(
       .createSignedUrl(clip.storage_path, CLIP_SIGNED_URL_TTL_SECONDS);
     if (!signed) continue;
 
-    const durationInSeconds =
-      clip.trim_start != null && clip.trim_end != null && clip.trim_end > clip.trim_start
-        ? clip.trim_end - clip.trim_start
-        : DEFAULT_CLIP_SECONDS;
+    const { trimStartInSeconds, durationInSeconds } = resolveTrimWindow(clip.trim_start, clip.trim_end, DEFAULT_CLIP_SECONDS);
 
     clips.push({
       id: clip.id,
@@ -43,6 +42,7 @@ export async function getSignedClipsForProject(
       number: clip.number,
       videoUrl: signed.signedUrl,
       durationInSeconds,
+      trimStartInSeconds,
     });
   }
 
