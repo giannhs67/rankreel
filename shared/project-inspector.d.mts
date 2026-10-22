@@ -4,5 +4,5 @@ export declare function inspectProject(args: {
   clips?: InspectedClip[];
   ranking?: boolean;
   settings?: Record<string, unknown> | null;
-  licenses?: Record<string, { status?: string }>;
+  licenses?: Record<string, { status?: string; source?: string }>;
 }): ProjectIssue[];
