@@ -38,6 +38,20 @@ export function StudioControls({ projectId, ranking = false }: { projectId: stri
     catch { /* Storage can be disabled in private browsing */ }
   }, [settings, storageKey]);
 
+  // Receive preset and script selections from the Creator Toolkit on the same page.
+  // A direct event avoids stale localStorage overwrites and does not need a reload.
+  useEffect(() => {
+    const sync = (event: Event) => {
+      const patch = (event as CustomEvent<Partial<StudioSettings>>).detail;
+      if (!patch || typeof patch !== "object") return;
+      setSettings(previous => ({ ...previous, ...patch }));
+      setHistory([]);
+      setFuture([]);
+    };
+    window.addEventListener(`short-tube-studio-update-${projectId}`, sync);
+    return () => window.removeEventListener(`short-tube-studio-update-${projectId}`, sync);
+  }, [projectId]);
+
   function change(patch: Partial<StudioSettings>) {
     setHistory(previous => [...previous.slice(-19), settings]);
     setFuture([]);
