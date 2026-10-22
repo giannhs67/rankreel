@@ -54,6 +54,7 @@ export async function renderCompositionLocally(params: {
   projectId: string;
   jobId: string;
   inputProps: Record<string, unknown>;
+  qualityPreset?: 'high' | 'balanced' | 'small';
   onProgress?: (progress: number) => void;
 }) {
   const serveUrl = await getBundleLocation();
