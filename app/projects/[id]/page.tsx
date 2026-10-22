@@ -99,7 +99,13 @@ export default async function ProjectPage({
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
             {project.format === "ranking_list" ? "Add a ranking clip" : "Add a video scene"}
           </h2>
-          <ClipUploadForm projectId={project.id} nextRankingNumber={project.format === "ranking_list" ? Math.max(1, 6 - (clips?.length ?? 0)) : 0} />
+          {project.format === "ranking_list" && (clips?.length ?? 0) >= 6 ? (
+            <p className="rounded-lg border border-amber-400/30 bg-amber-400/5 p-3 text-sm">
+              All six ranking positions are filled. Edit, reorder or remove a clip to change the list.
+            </p>
+          ) : (
+            <ClipUploadForm projectId={project.id} nextRankingNumber={project.format === "ranking_list" ? Math.max(1, 6 - (clips?.length ?? 0)) : 0} />
+          )}
         </section>
 
         <section>
