@@ -6,6 +6,7 @@ import { ClipUploadForm } from "./clip-upload-form";
 import { SortableClipList } from "./sortable-clip-list";
 import { RenderPanel } from "./render-panel";
 import { StudioControls } from "./studio-controls";
+import { CreatorTools } from "./creator-tools";
 
 export default async function ProjectPage({
   params,
@@ -91,6 +92,8 @@ export default async function ProjectPage({
             <StudioControls projectId={project.id} />
           </section>
         )}
+
+        <CreatorTools projectId={project.id} clips={clips ?? []} ranking={project.format === "ranking_list"} />
 
         <section>
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
