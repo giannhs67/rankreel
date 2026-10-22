@@ -86,7 +86,7 @@ export default async function ProjectPage({
               </div>
               <span className="rounded-lg bg-amber-400 px-3 py-1 text-xs font-bold text-black">RANKING</span>
             </div>
-            <StudioControls projectId={project.id} ranking />
+            <StudioControls projectId={project.id} ranking clips={clips ?? []} />
           </section>
         ) : (
           <section className="space-y-3">
@@ -95,7 +95,7 @@ export default async function ProjectPage({
               <h2 className="text-xl font-bold">Video Editor</h2>
               <p className="text-sm text-black/60 dark:text-white/60">Build your story or edit your footage scene by scene.</p>
             </div>
-            <StudioControls projectId={project.id} />
+            <StudioControls projectId={project.id} clips={clips ?? []} />
           </section>
         )}
 
