@@ -44,6 +44,8 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
   const startFrames = getClipStartFrames(clips, fps);
   const currentIndex = getCurrentClipIndex(startFrames, frame);
   const current = clips[currentIndex];
+  // Keep countdown playback order, but place #1 at the top of the visual list.
+  const displayClips = [...clips].reverse();
   const clipFrame = frame - (startFrames[currentIndex] ?? 0);
   const transition = studioSettings?.transitions ?? "cut";
   const opacity = transition === "fade" ? interpolate(clipFrame, [0, Math.max(1, Math.round(fps * 0.25))], [0, 1], { extrapolateRight: "clamp" }) : 1;
@@ -91,9 +93,10 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
               gap: 20,
             }}
           >
-            {clips.map((clip, i) => {
-              const isCurrent = i === currentIndex;
-              const framesSinceReveal = frame - startFrames[i];
+            {displayClips.map((clip) => {
+              const playbackIndex = clips.findIndex((item) => item.id === clip.id);
+              const isCurrent = playbackIndex === currentIndex;
+              const framesSinceReveal = frame - startFrames[playbackIndex];
               const style = entranceStyle(config.animation, framesSinceReveal, fps);
               return (
                 <div
