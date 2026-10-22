@@ -1,6 +1,6 @@
 import { AbsoluteFill, Series, Video, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import type { StudioRenderSettings } from "@/shared/studio-settings";
-import { getVideoLookFilter } from "@/shared/video-looks";
+import { getClipVideoFilter } from "@/shared/video-looks";
 import { DEFAULT_RANKING_CONFIG, type RankingListConfig } from "./ranking-config";
 import { clipFramesFor, getClipStartFrames, getCurrentClipIndex, getTotalDurationInFrames } from "./clip-timing";
 import { entranceStyle } from "./entrance-style";
@@ -71,7 +71,7 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
-                    filter: `${getVideoLookFilter(studioSettings?.videoLook)} blur(40px) brightness(0.5)`,
+                    filter: `${getClipVideoFilter(studioSettings, clip.id)} blur(40px) brightness(0.5)`,
                     transform: "scale(1.2)",
                   }}
                 />
@@ -133,7 +133,7 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
           {clips.map((clip) => (
             <Series.Sequence key={clip.id} durationInFrames={clipFramesFor(clip.durationInSeconds, fps)}>
               <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
-                <Video src={clip.videoUrl} startFrom={trimStartFrame(clip, fps)} style={{ maxWidth: "100%", maxHeight: "100%", filter: getVideoLookFilter(studioSettings?.videoLook) }} />
+                <Video src={clip.videoUrl} startFrom={trimStartFrame(clip, fps)} style={{ maxWidth: "100%", maxHeight: "100%", filter: getClipVideoFilter(studioSettings, clip.id) }} />
               </AbsoluteFill>
             </Series.Sequence>
           ))}
