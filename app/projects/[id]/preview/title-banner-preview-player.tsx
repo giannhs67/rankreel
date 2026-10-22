@@ -3,9 +3,11 @@
 import { Player } from "@remotion/player";
 import { TitleBanner, getTitleBannerMetadata, type TitleBannerProps } from "@/remotion/TitleBanner";
 import { useLoadFont } from "@/lib/use-load-font";
+import { useStudioPreviewSettings } from "@/lib/use-studio-preview-settings";
 
 export function TitleBannerPreviewPlayer(props: TitleBannerProps & { customFontUrl: string | null }) {
   const { customFontUrl, ...playerProps } = props;
+  const studioSettings = useStudioPreviewSettings();
   const { fps, durationInFrames, width, height } = getTitleBannerMetadata(playerProps);
 
   useLoadFont(
@@ -25,7 +27,7 @@ export function TitleBannerPreviewPlayer(props: TitleBannerProps & { customFontU
     >
       <Player
         component={TitleBanner}
-        inputProps={playerProps}
+        inputProps={{ ...playerProps, ...(studioSettings ? { studioSettings } : {}) }}
         durationInFrames={durationInFrames}
         fps={fps}
         compositionWidth={width}
