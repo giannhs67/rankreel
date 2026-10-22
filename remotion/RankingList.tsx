@@ -55,22 +55,26 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
     <AbsoluteFill style={{ backgroundColor: "black" }}>
       {/* Top: blurred backdrop of the current clip + the ranking list */}
       <AbsoluteFill style={{ height: TOP_HEIGHT, overflow: "hidden" }}>
-        {current && (
-          <AbsoluteFill>
-            <Video
-              src={current.videoUrl}
-              startFrom={trimStartFrame(current, fps)}
-              muted
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                filter: "blur(40px) brightness(0.5)",
-                transform: "scale(1.2)",
-              }}
-            />
-          </AbsoluteFill>
-        )}
+        <Series>
+          {clips.map((clip) => (
+            <Series.Sequence key={clip.id} durationInFrames={clipFramesFor(clip.durationInSeconds, fps)}>
+              <AbsoluteFill>
+                <Video
+                  src={clip.videoUrl}
+                  startFrom={trimStartFrame(clip, fps)}
+                  muted
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    filter: "blur(40px) brightness(0.5)",
+                    transform: "scale(1.2)",
+                  }}
+                />
+              </AbsoluteFill>
+            </Series.Sequence>
+          ))}
+        </Series>
         <AbsoluteFill
           style={{
             padding: 0,
