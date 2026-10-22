@@ -19,6 +19,10 @@ function getBundleLocation() {
     bundleLocationPromise = bundle({
       entryPoint: path.join(process.cwd(), "remotion", "index.ts"),
       onProgress: () => {},
+    }).catch((error) => {
+      // Failed bundle should not poison all later jobs for this process.
+      bundleLocationPromise = null;
+      throw error;
     });
   }
   return bundleLocationPromise;
@@ -33,7 +37,10 @@ let browserPromise: ReturnType<typeof openBrowser> | null = null;
 
 function getBrowser() {
   if (!browserPromise) {
-    browserPromise = openBrowser("chrome");
+    browserPromise = openBrowser("chrome").catch((error) => {
+      browserPromise = null;
+      throw error;
+    });
   }
   return browserPromise;
 }
@@ -49,27 +56,41 @@ export async function renderCompositionLocally(params: {
   inputProps: Record<string, unknown>;
   onProgress?: (progress: number) => void;
 }) {
-  const [serveUrl, puppeteerInstance] = await Promise.all([getBundleLocation(), getBrowser()]);
-
-  const composition = await selectComposition({
-    serveUrl,
-    id: params.compositionId,
-    inputProps: params.inputProps,
-    puppeteerInstance,
-  });
-
+  const serveUrl = await getBundleLocation();
   const outputLocation = outputPathForJob(params.projectId, params.jobId);
   await fs.mkdir(path.dirname(outputLocation), { recursive: true });
 
-  await renderMedia({
-    composition,
-    serveUrl,
-    codec: "h264",
-    outputLocation,
-    inputProps: params.inputProps,
-    puppeteerInstance,
-    onProgress: ({ progress }) => params.onProgress?.(progress),
-  });
-
-  return outputLocation;
+  // If Chromium crashes, discard the cached instance and retry once with a fresh process.
+  // Other errors (invalid clips, ffmpeg, assets) should fail clearly rather than looping.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const puppeteerInstance = await getBrowser();
+    try {
+      const composition = await selectComposition({
+        serveUrl,
+        id: params.compositionId,
+        inputProps: params.inputProps,
+        puppeteerInstance,
+      });
+      await renderMedia({
+        composition,
+        serveUrl,
+        codec: "h264",
+        outputLocation,
+        inputProps: params.inputProps,
+        puppeteerInstance,
+        onProgress: ({ progress }) => params.onProgress?.(progress),
+      });
+      return outputLocation;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const browserLost = /Session closed|Target closed|Browser has disconnected|Connection closed|Protocol error.*closed/i.test(message);
+      if (!browserLost) throw error;
+      browserPromise = null;
+      try { await puppeteerInstance.close(); } catch { /* browser already gone */ }
+      if (attempt === 1) throw error;
+      params.onProgress?.(0);
+      await fs.rm(outputLocation, { force: true }).catch(() => undefined);
+    }
+  }
+  throw new Error("Render did not complete.");
 }
