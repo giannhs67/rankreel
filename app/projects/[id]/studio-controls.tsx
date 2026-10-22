@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MusicControls } from "./music-controls";
+import { parseSrt, type TimedCaption } from "@/shared/timed-captions";
 import { SOUND_NAMES, type SoundCue, type SoundEffectKind } from "@/shared/sound-effects";
 import type { MusicTrack } from "@/shared/music-track";
 import { VIDEO_LOOKS, getVideoLookFilter, type VideoLook } from "@/shared/video-looks";
@@ -20,6 +21,7 @@ type StudioSettings = {
   music: boolean;
   musicTrack: MusicTrack | null;
   soundCues: SoundCue[];
+  timedCaptions: TimedCaption[];
   transitions: "cut" | "fade" | "zoom";
   captionStyle: "bold" | "minimal" | "karaoke";
   volume: number;
@@ -30,7 +32,7 @@ const defaults: StudioSettings = {
   videoLook: "original", lookIntensity: 100, clipLooks: {},
   cropMode: "cover", cropZoom: 100, overlayText: "",
   mode: "simple", voice: "deep", script: "", captions: true,
-  musicTrack: null, soundCues: [], music: true, transitions: "cut", captionStyle: "bold",
+  musicTrack: null, soundCues: [], timedCaptions: [], music: true, transitions: "cut", captionStyle: "bold",
   volume: 25, autoCreate: false,
 };
 
@@ -245,6 +247,22 @@ export function StudioControls({ projectId, ranking = false, clips = [] }: { pro
         <label className="flex items-center gap-2"><input type="checkbox" checked={settings.captions} onChange={e => change({ captions: e.target.checked })}/> {ranking ? "Clip title overlays" : "Show on-screen titles / captions"}</label>
         <span className="text-xs text-black/50 dark:text-white/50">Per-word subtitles are not active yet.</span>
       </div>
+      <details className="rounded-xl border border-black/15 p-3 dark:border-white/20">
+        <summary className="cursor-pointer text-sm font-semibold">Timed subtitles · SRT</summary>
+        <p className="my-2 text-xs opacity-60">Import existing SRT timing into preview and MP4. This is not AI transcription yet.</p>
+        <input type="file" accept=".srt,text/plain" className="block w-full text-xs" onChange={async e => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          if (file.size > 1000000) { alert("SRT must be below 1 MB."); return; }
+          const captions = parseSrt(await file.text());
+          if (!captions.length) { alert("No valid SRT subtitles found."); return; }
+          change({ timedCaptions: captions });
+          e.target.value = "";
+        }} />
+        <p className="mt-2 text-xs">{settings.timedCaptions.length} timed caption segments ready.</p>
+        {!!settings.timedCaptions.length && <button type="button" onClick={() => change({ timedCaptions: [] })}
+          className="mt-2 rounded border px-2 py-1 text-xs">Clear timed subtitles</button>}
+      </details>
       <details className="rounded-xl border border-black/15 p-3 dark:border-white/20">
         <summary className="cursor-pointer text-sm font-semibold">Sound Effects · timed cues</summary>
         <p className="my-2 text-xs opacity-60">Generated pop, click and chime sounds, included in preview and MP4. Add at a precise second.</p>
