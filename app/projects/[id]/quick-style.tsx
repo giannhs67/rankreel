@@ -14,6 +14,7 @@ export function QuickStyle({
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [revision, setRevision] = useState(0);
+  const [safeZone, setSafeZone] = useState<"off" | "youtube" | "instagram" | "tiktok">("off");
 
   function save() {
     setMessage(null);
@@ -64,10 +65,24 @@ export function QuickStyle({
         {pending ? "Saving…" : "Save style & refresh preview"}
       </button>
       {message && <p role="status" className="text-xs">{message}</p>}
-      <div className="overflow-hidden rounded-xl border border-black/10 bg-black dark:border-white/10">
+      <label className="block text-xs font-medium">Social platform safe-zone guide (preview only)
+        <select className="mt-1 w-full rounded-lg border border-black/15 bg-transparent p-2 dark:border-white/15"
+          value={safeZone} onChange={e => setSafeZone(e.target.value as typeof safeZone)}>
+          <option value="off">Off</option><option value="youtube">YouTube Shorts</option>
+          <option value="instagram">Instagram Reels</option><option value="tiktok">TikTok</option>
+        </select>
+      </label>
+      <p className="text-xs opacity-60">Approximate interface obstruction areas. The guides are not burned into the MP4; platforms can change their interface.</p>
+      <div className="relative overflow-hidden rounded-xl border border-black/10 bg-black dark:border-white/10">
         <iframe key={revision} title="Current video preview" loading="lazy"
           src={`/projects/${projectId}/preview?inline=1&revision=${revision}`}
           className="mx-auto block h-[620px] w-full max-w-[400px] bg-black" />
+        {safeZone !== "off" && <div aria-hidden="true" className="pointer-events-none absolute inset-0 mx-auto max-w-[400px]">
+          <div className="absolute inset-x-0 top-0 h-[12%] border-b-2 border-dashed border-amber-400/80 bg-amber-400/10" />
+          <div className="absolute bottom-0 left-0 right-0 h-[21%] border-t-2 border-dashed border-amber-400/80 bg-amber-400/10" />
+          <div className="absolute bottom-[20%] right-0 top-[34%] w-[18%] border-l-2 border-dashed border-amber-400/80 bg-amber-400/10" />
+          <div className="absolute left-2 top-2 rounded bg-black/70 px-2 py-1 text-[10px] font-medium text-amber-300">Approximate {safeZone} safe zone</div>
+        </div>}
       </div>
       <p className="text-xs text-black/45 dark:text-white/45">
         This is the real project preview. Video playback may require loading media from storage.
