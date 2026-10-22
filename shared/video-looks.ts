@@ -27,3 +27,12 @@ export function getVideoLookFilter(look: VideoLook | undefined | null, intensity
       return "none";
   }
 }
+
+/** Use the clip override when one exists, otherwise the project-wide look. */
+export function getClipVideoFilter(
+  settings: { videoLook?: VideoLook; lookIntensity?: number; clipLooks?: Record<string, { look: VideoLook; intensity: number }> } | null | undefined,
+  clipId: string,
+): string {
+  const override = settings?.clipLooks?.[clipId];
+  return getVideoLookFilter(override?.look ?? settings?.videoLook, override?.intensity ?? settings?.lookIntensity ?? 100);
+}
