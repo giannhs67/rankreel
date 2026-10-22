@@ -10,6 +10,8 @@ export function TimedCaptions({ settings }: { settings?: StudioRenderSettings })
   return <AbsoluteFill style={{ pointerEvents: "none", justifyContent: "flex-end", alignItems: "center", padding: "0 95px 230px" }}>
     <div style={{ borderRadius: 16, background: "rgba(0,0,0,.8)", color: "#fff", fontFamily: "Arial,sans-serif",
       fontSize: 52, fontWeight: 900, textAlign: "center", lineHeight: 1.2,
-      padding: "14px 24px", maxWidth: "100%", overflowWrap: "anywhere" }}>{active.text}</div>
+      padding: "14px 24px", maxWidth: "100%", overflowWrap: "anywhere" }}>{settings.captionHighlight ? active.text.split(/(\\s+)/).map((word, i) =>
+        <span key={i} style={{ color: /^(never|crazy|amazing|best|worst|top|wow|no|yes|first|last|unbelievable)[!?.,]*$/i.test(word) ? "#facc15" : "#fff" }}>{word}</span>
+      ) : active.text}</div>
   </AbsoluteFill>;
 }
