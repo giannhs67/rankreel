@@ -2,6 +2,7 @@ import { AbsoluteFill, Series, Video, useCurrentFrame, useVideoConfig } from "re
 import { DEFAULT_CAPTION_CONFIG, type CaptionConfig } from "./caption-config";
 import { clipFramesFor, getClipStartFrames, getCurrentClipIndex, getTotalDurationInFrames } from "./clip-timing";
 import { entranceStyle } from "./entrance-style";
+import { trimStartFrame } from "../shared/trim-window.mjs";
 
 // Each clip's `title` doubles as its full caption sentence, shown for that clip's whole
 // duration. This is NOT true word-by-word sync — that needs per-word timestamps, which means
@@ -13,6 +14,7 @@ export type CaptionClip = {
   title: string;
   videoUrl: string;
   durationInSeconds: number;
+  trimStartInSeconds: number;
 };
 
 export type CaptionProps = {
@@ -50,7 +52,7 @@ export function Caption({ clips, config = DEFAULT_CAPTION_CONFIG }: CaptionProps
         {clips.map((clip) => (
           <Series.Sequence key={clip.id} durationInFrames={clipFramesFor(clip.durationInSeconds, fps)}>
             <AbsoluteFill>
-              <Video src={clip.videoUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <Video src={clip.videoUrl} startFrom={trimStartFrame(clip, fps)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </AbsoluteFill>
           </Series.Sequence>
         ))}
