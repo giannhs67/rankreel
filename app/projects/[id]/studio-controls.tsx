@@ -9,6 +9,9 @@ import { VIDEO_LOOKS, getVideoLookFilter, type VideoLook } from "@/shared/video-
 
 type StudioSettings = {
   videoLook: VideoLook;
+  audioDucking: boolean;
+  duckingLevel: number;
+  captionHighlight: boolean;
   cropMode: "cover" | "contain";
   cropZoom: number;
   overlayText: string;
@@ -31,6 +34,7 @@ type StudioSettings = {
 const defaults: StudioSettings = {
   videoLook: "original", lookIntensity: 100, clipLooks: {},
   cropMode: "cover", cropZoom: 100, overlayText: "",
+  audioDucking: false, duckingLevel: 25, captionHighlight: false,
   mode: "simple", voice: "deep", script: "", captions: true,
   musicTrack: null, soundCues: [], timedCaptions: [], music: true, transitions: "cut", captionStyle: "bold",
   volume: 25, autoCreate: false,
@@ -249,6 +253,22 @@ export function StudioControls({ projectId, ranking = false, clips = [] }: { pro
         <label className="flex items-center gap-2"><input type="checkbox" checked={settings.captions} onChange={e => change({ captions: e.target.checked })}/> {ranking ? "Clip title overlays" : "Show on-screen titles / captions"}</label>
         <span className="text-xs text-black/50 dark:text-white/50">Per-word subtitles are not active yet.</span>
       </div>
+      <details className="rounded-xl border border-black/15 p-3 dark:border-white/20">
+        <summary className="cursor-pointer text-sm font-semibold">Advanced audio & caption styling</summary>
+        <label className="mt-3 flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={settings.audioDucking} onChange={e => change({ audioDucking: e.target.checked })}/>
+          Reduce background music during narration
+        </label>
+        {settings.audioDucking && <label className="mt-2 block text-sm">Music level during narration: {settings.duckingLevel}%
+          <input className="block w-full" type="range" min={0} max={100} value={settings.duckingLevel}
+            onChange={e => change({ duckingLevel: Number(e.target.value) })}/>
+        </label>}
+        <p className="mt-2 text-xs opacity-60">Ducking applies when a voiceover script is supplied; exact spoken intervals require tested word timestamps.</p>
+        <label className="mt-3 flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={settings.captionHighlight} onChange={e => change({ captionHighlight: e.target.checked })}/>
+          Highlight emphasis words in timed subtitles
+        </label>
+      </details>
       <details className="rounded-xl border border-black/15 p-3 dark:border-white/20">
         <summary className="cursor-pointer text-sm font-semibold">Timed subtitles · SRT</summary>
         <p className="my-2 text-xs opacity-60">Import existing SRT timing into preview and MP4. This is not AI transcription yet.</p>
