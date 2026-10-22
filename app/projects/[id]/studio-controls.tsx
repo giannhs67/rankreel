@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { VIDEO_LOOKS, type VideoLook } from "@/shared/video-looks";
 
 type StudioSettings = {
+  videoLook: VideoLook;
   mode: "simple" | "advanced";
   voice: "deep" | "energetic" | "documentary";
   script: string;
@@ -15,6 +17,7 @@ type StudioSettings = {
 };
 
 const defaults: StudioSettings = {
+  videoLook: "original",
   mode: "simple", voice: "deep", script: "", captions: true,
   music: true, transitions: "cut", captionStyle: "bold",
   volume: 25, autoCreate: false,
@@ -121,6 +124,23 @@ export function StudioControls({ projectId, ranking = false }: { projectId: stri
             <option value="cut">Quick cut</option><option value="fade">Fade</option><option value="zoom">Zoom</option>
           </select>
         </label>
+      </div>
+      <div className="space-y-2">
+        <p className="text-sm font-medium">Video look / color filter</p>
+        <p className="text-xs text-black/50 dark:text-white/50">Changes video colors in the preview and MP4. Captions keep their own colors.</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {(Object.entries(VIDEO_LOOKS) as [VideoLook, typeof VIDEO_LOOKS[VideoLook]][]).map(([value, look]) => (
+            <button type="button" key={value} onClick={() => change({ videoLook: value })}
+              aria-pressed={settings.videoLook === value}
+              className={`rounded-lg border px-3 py-3 text-left text-xs font-semibold transition ${settings.videoLook === value ? "border-amber-400 bg-amber-400/15" : "border-black/15 dark:border-white/20"}`}>
+              <span className="mb-2 block h-8 rounded-md" style={{
+                background: "linear-gradient(115deg, #ed6c46 0%, #6d74bb 45%, #1d294a 100%)",
+                filter: look.filter,
+              }} />
+              {look.label}
+            </button>
+          ))}
+        </div>
       </div>
       <label className="block space-y-1 text-sm">
         <span className="font-medium">Voiceover script</span>
