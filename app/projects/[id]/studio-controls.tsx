@@ -40,6 +40,8 @@ export function StudioControls({ projectId, ranking = false, clips = [] }: { pro
   const [settings, setSettings] = useState<StudioSettings>(defaults);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [voicePreviewing, setVoicePreviewing] = useState(false);
+  const [transcribingId, setTranscribingId] = useState<string | null>(null);
+  const [transcribeError, setTranscribeError] = useState("");
   const [history, setHistory] = useState<StudioSettings[]>([]);
   const [future, setFuture] = useState<StudioSettings[]>([]);
   const storageKey = `short-tube-studio-${projectId}`;
@@ -250,6 +252,25 @@ export function StudioControls({ projectId, ranking = false, clips = [] }: { pro
       <details className="rounded-xl border border-black/15 p-3 dark:border-white/20">
         <summary className="cursor-pointer text-sm font-semibold">Timed subtitles · SRT</summary>
         <p className="my-2 text-xs opacity-60">Import existing SRT timing into preview and MP4. This is not AI transcription yet.</p>
+        <p className="mt-2 text-xs opacity-60">Offline AI transcription (Whisper.cpp): requires FFmpeg and a local model installed on the Windows host. No API credits.</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {clips.map(clip => <button key={clip.id} type="button" disabled={transcribingId !== null}
+            className="rounded border px-2 py-1.5 text-xs disabled:opacity-40"
+            onClick={async () => {
+              setTranscribingId(clip.id); setTranscribeError("");
+              try {
+                const response = await fetch("/api/transcribe", { method: "POST",
+                  headers: { "Content-Type": "application/json" }, body: JSON.stringify({ projectId, clipId: clip.id }) });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || "Transcription failed");
+                change({ timedCaptions: [...settings.timedCaptions, ...(data.captions as TimedCaption[])]
+                  .sort((a, b) => a.start - b.start).slice(0, 500) });
+              } catch (err) { setTranscribeError(err instanceof Error ? err.message : "Transcription failed"); }
+              finally { setTranscribingId(null); }
+            }}>{transcribingId === clip.id ? "Transcribing…" : `Transcribe: ${clip.title.slice(0, 30)}`}</button>)}
+        </div>
+        {transcribeError && <p role="alert" className="mt-2 text-xs text-red-500">{transcribeError}</p>}
+
         <input type="file" accept=".srt,text/plain" className="block w-full text-xs" onChange={async e => {
           const file = e.target.files?.[0];
           if (!file) return;
