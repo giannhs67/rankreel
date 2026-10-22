@@ -111,11 +111,13 @@ export async function applyTemplate(
 /** Minimal style controls on the project dashboard; no separate Style page required. */
 export async function saveQuickStyle(
   projectId: string,
-  updates: { textColor: string; accentColor: string; fontSize: number },
+  updates: { textColor: string; accentColor: string; fontSize: number; captionOpacity?: number },
 ) {
   const hex = /^#[0-9a-fA-F]{6}$/;
   if (!hex.test(updates.textColor) || !hex.test(updates.accentColor) ||
-      !Number.isInteger(updates.fontSize) || updates.fontSize < 24 || updates.fontSize > 120) {
+      !Number.isInteger(updates.fontSize) || updates.fontSize < 24 || updates.fontSize > 120 ||
+      (updates.captionOpacity !== undefined && (!Number.isInteger(updates.captionOpacity) ||
+        updates.captionOpacity < 0 || updates.captionOpacity > 100))) {
     throw new Error("Invalid quick style values.");
   }
 
@@ -147,7 +149,10 @@ export async function saveQuickStyle(
   } else if (format === "caption") {
     const base = resolveCaptionConfig(stored as Parameters<typeof resolveCaptionConfig>[0]);
     config = { ...base, text: { ...base.text, fontSize: updates.fontSize,
-      color: updates.textColor, backgroundColor: updates.accentColor } };
+      color: updates.textColor,
+      backgroundColor: updates.captionOpacity === undefined || updates.captionOpacity === 100
+        ? updates.accentColor
+        : `rgba(${parseInt(updates.accentColor.slice(1, 3), 16)},${parseInt(updates.accentColor.slice(3, 5), 16)},${parseInt(updates.accentColor.slice(5, 7), 16)},${updates.captionOpacity / 100})` } };
   } else {
     throw new Error("Unsupported format.");
   }
