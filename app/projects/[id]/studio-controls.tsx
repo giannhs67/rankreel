@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MusicControls } from "./music-controls";
+import { SOUND_NAMES, type SoundCue, type SoundEffectKind } from "@/shared/sound-effects";
 import type { MusicTrack } from "@/shared/music-track";
 import { VIDEO_LOOKS, getVideoLookFilter, type VideoLook } from "@/shared/video-looks";
 
@@ -18,6 +19,7 @@ type StudioSettings = {
   captions: boolean;
   music: boolean;
   musicTrack: MusicTrack | null;
+  soundCues: SoundCue[];
   transitions: "cut" | "fade" | "zoom";
   captionStyle: "bold" | "minimal" | "karaoke";
   volume: number;
@@ -28,7 +30,7 @@ const defaults: StudioSettings = {
   videoLook: "original", lookIntensity: 100, clipLooks: {},
   cropMode: "cover", cropZoom: 100, overlayText: "",
   mode: "simple", voice: "deep", script: "", captions: true,
-  musicTrack: null, music: true, transitions: "cut", captionStyle: "bold",
+  musicTrack: null, soundCues: [], music: true, transitions: "cut", captionStyle: "bold",
   volume: 25, autoCreate: false,
 };
 
@@ -243,6 +245,30 @@ export function StudioControls({ projectId, ranking = false, clips = [] }: { pro
         <label className="flex items-center gap-2"><input type="checkbox" checked={settings.captions} onChange={e => change({ captions: e.target.checked })}/> {ranking ? "Clip title overlays" : "Show on-screen titles / captions"}</label>
         <span className="text-xs text-black/50 dark:text-white/50">Per-word subtitles are not active yet.</span>
       </div>
+      <details className="rounded-xl border border-black/15 p-3 dark:border-white/20">
+        <summary className="cursor-pointer text-sm font-semibold">Sound Effects · timed cues</summary>
+        <p className="my-2 text-xs opacity-60">Generated pop, click and chime sounds, included in preview and MP4. Add at a precise second.</p>
+        <div className="flex flex-wrap gap-2">
+          {(["pop", "click", "chime"] as SoundEffectKind[]).map(kind =>
+            <button key={kind} type="button" className="rounded border px-3 py-1.5 text-xs"
+              onClick={() => {
+                const raw = prompt("At what second should the sound play?", "0");
+                if (raw === null) return;
+                const atSeconds = Number(raw);
+                if (!Number.isFinite(atSeconds) || atSeconds < 0 || atSeconds > 3600) { alert("Enter a time from 0 to 3600 seconds."); return; }
+                change({ soundCues: [...(settings.soundCues ?? []), { id: crypto.randomUUID(), kind, atSeconds, volume: 70 }].slice(0, 40) });
+              }}>+ {SOUND_NAMES[kind]}</button>)}
+        </div>
+        <div className="mt-2 space-y-1">
+          {(settings.soundCues ?? []).map(cue => <div key={cue.id} className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="font-medium">{SOUND_NAMES[cue.kind]} @ {cue.atSeconds.toFixed(1)}s</span>
+            <label>Volume {cue.volume}%
+              <input type="range" min={0} max={100} value={cue.volume} onChange={e => change({ soundCues: settings.soundCues.map(item => item.id === cue.id ? { ...item, volume: Number(e.target.value) } : item) })} />
+            </label>
+            <button type="button" className="rounded border px-2 py-1" onClick={() => change({ soundCues: settings.soundCues.filter(item => item.id !== cue.id) })}>Remove</button>
+          </div>)}
+        </div>
+      </details>
       {settingsLoaded && <MusicControls projectId={projectId} track={settings.musicTrack} enabled={settings.music} volume={settings.volume} onChange={change} />}
       {settings.mode === "advanced" && ranking && (
         <div className="grid gap-4 sm:grid-cols-2">
