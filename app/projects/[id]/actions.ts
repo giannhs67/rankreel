@@ -358,7 +358,11 @@ export async function splitScene(projectId: string, clipId: string, splitAt: num
   if (insertError || !second) throw new Error(insertError?.message ?? "Split failed.");
   const { error: trimError } = await supabase.from("clips").update({ trim_end: splitAt })
     .eq("id", source.id).eq("project_id", projectId);
-  if (trimError) throw new Error("Second segment added; could not update the first segment: " + trimError.message);
+  if (trimError) {
+    // Roll back the new database row, leaving the existing media and first clip untouched.
+    await supabase.from("clips").delete().eq("id", second.id).eq("project_id", projectId);
+    throw new Error("Split could not update the first segment: " + trimError.message);
+  }
   await moveClipToPosition(projectId, second.id, scenes.findIndex(scene => scene.id === clipId) + 1);
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/preview`);
