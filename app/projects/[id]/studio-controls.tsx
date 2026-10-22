@@ -7,6 +7,9 @@ import { VIDEO_LOOKS, getVideoLookFilter, type VideoLook } from "@/shared/video-
 
 type StudioSettings = {
   videoLook: VideoLook;
+  cropMode: "cover" | "contain";
+  cropZoom: number;
+  overlayText: string;
   lookIntensity: number;
   clipLooks: Record<string, { look: VideoLook; intensity: number }>;
   mode: "simple" | "advanced";
@@ -23,6 +26,7 @@ type StudioSettings = {
 
 const defaults: StudioSettings = {
   videoLook: "original", lookIntensity: 100, clipLooks: {},
+  cropMode: "cover", cropZoom: 100, overlayText: "",
   mode: "simple", voice: "deep", script: "", captions: true,
   musicTrack: null, music: true, transitions: "cut", captionStyle: "bold",
   volume: 25, autoCreate: false,
@@ -130,6 +134,27 @@ export function StudioControls({ projectId, ranking = false, clips = [] }: { pro
           </select>
         </label>
       </div>
+      <details className="rounded-xl border border-black/10 p-3 dark:border-white/15">
+        <summary className="cursor-pointer text-sm font-semibold">Crop / Zoom / Text overlay</summary>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <label className="space-y-1 text-sm">Frame mode
+            <select className={input} value={settings.cropMode} onChange={e => change({ cropMode: e.target.value as StudioSettings["cropMode"] })}>
+              <option value="cover">Fill 9:16 (crop edges)</option>
+              <option value="contain">Fit entire video (black bars)</option>
+            </select>
+          </label>
+          <label className="space-y-1 text-sm">Video zoom · {settings.cropZoom}%
+            <input type="range" min={100} max={200} value={settings.cropZoom}
+              onChange={e => change({ cropZoom: Number(e.target.value) })} className="w-full accent-amber-400" />
+          </label>
+        </div>
+        <label className="mt-3 block space-y-1 text-sm">Custom overlay text
+          <input maxLength={160} className={input} value={settings.overlayText}
+            onChange={e => change({ overlayText: e.target.value })}
+            placeholder="Optional headline shown above clips" />
+        </label>
+        <p className="mt-2 text-xs text-black/50 dark:text-white/50">Applies to all scenes in preview and MP4; titles and ranking stay editable separately.</p>
+      </details>
       <div className="space-y-2">
         <p className="text-sm font-medium">Video look / color filter</p>
         <p className="text-xs text-black/50 dark:text-white/50">Changes video colors in the preview and MP4. Captions keep their own colors.</p>
