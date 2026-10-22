@@ -86,7 +86,6 @@ export async function renderCompositionLocally(params: {
       const browserLost = /Session closed|Target closed|Browser has disconnected|Connection closed|Protocol error.*closed/i.test(message);
       if (!browserLost) throw error;
       browserPromise = null;
-      try { await puppeteerInstance.close(); } catch { /* browser already gone */ }
       if (attempt === 1) throw error;
       params.onProgress?.(0);
       await fs.rm(outputLocation, { force: true }).catch(() => undefined);
