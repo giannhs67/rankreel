@@ -53,11 +53,11 @@ export function StudioControls({ projectId, ranking = false, clips = [] }: { pro
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<StudioSettings>;
         if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-          setSettings({ ...defaults, ...parsed });
+          queueMicrotask(() => setSettings({ ...defaults, ...parsed }));
         }
       }
     } catch { /* Malformed or disabled browser storage falls back to defaults */ }
-    setSettingsLoaded(true);
+    queueMicrotask(() => setSettingsLoaded(true));
   }, [storageKey]);
 
   useEffect(() => {
