@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { parseTimedCaptions, type TimedCaption } from "@/shared/timed-captions";
 import { useRouter } from "next/navigation";
 import { splitScene } from "./actions";
 
@@ -10,6 +11,16 @@ export function ClipFinder({ projectId, clips, ranking }: { projectId: string; c
   const router = useRouter();
   const [busy, start] = useTransition();
   const [error, setError] = useState("");
+  const [captions, setCaptions] = useState<TimedCaption[]>([]);
+  useEffect(() => {
+    const sync = () => {
+      try { const saved = JSON.parse(localStorage.getItem("short-tube-studio-" + projectId) ?? "{}");
+        setCaptions(parseTimedCaptions(saved.timedCaptions)); } catch { setCaptions([]); }
+    };
+    sync();
+    window.addEventListener("short-tube-studio-saved-" + projectId, sync);
+    return () => window.removeEventListener("short-tube-studio-saved-" + projectId, sync);
+  }, [projectId]);
   const [chosen, setChosen] = useState<Record<string, number>>({});
   const suggestions = clips.flatMap(scene => {
     if (scene.trim_start == null || scene.trim_end == null) return [];
@@ -18,14 +29,33 @@ export function ClipFinder({ projectId, clips, ranking }: { projectId: string; c
     const recommended = scene.trim_start + Math.min(8, Math.max(2.5, duration * 0.5));
     return [{ ...scene, duration, recommended: Number(recommended.toFixed(1)) }];
   });
+  // Score transcript hooks locally. No model inference and no automatic editing.
+  const hookCandidates = useMemo(() => {
+    const ranked = captions.map(line => {
+      const words = line.text.toLowerCase();
+      const score = (/[!?]/.test(line.text) ? 3 : 0) +
+        (/\\b(unbelievable|impossible|crazy|amazing|never|biggest|funniest|top|best|worst|insane|look|watch|why|how)\\b/.test(words) ? 3 : 0) +
+        (line.text.length >= 25 && line.text.length <= 130 ? 1 : 0);
+      return { ...line, score };
+    }).filter(line => line.score >= 3).sort((a, b) => b.score - a.score || a.start - b.start).slice(0, 5);
+    return ranked;
+  }, [captions]);
   return <section className="space-y-3 rounded-xl border border-black/10 p-4 dark:border-white/15">
     <div>
       <h2 className="font-semibold">Clip Finder · Review suggestions</h2>
       <p className="mt-1 text-xs opacity-60">
-        Duration-based split suggestions only. No scene recognition, audio AI or automatic cuts. Approve individually.
+        Duration-based split suggestions and transcript keyword highlights. No visual AI or automatic cuts; approve individually.
       </p>
     </div>
     {ranking && <p className="text-xs opacity-70">Ranking keeps one scene per rank. Switch to Story or Title format to split scenes.</p>}
+    <div className="space-y-2">
+      <h3 className="text-xs font-semibold">Transcript highlights · {hookCandidates.length} suggested</h3>
+      {hookCandidates.map((line, index) => <div key={index} className="rounded-lg border border-black/10 p-2 text-xs dark:border-white/15">
+        <span className="font-semibold">{line.start.toFixed(1)}s–{line.end.toFixed(1)}s</span>
+        <p className="mt-1">{line.text}</p>
+      </div>)}
+      {!captions.length && <p className="text-xs opacity-60">Import SRT or transcribe clips to enable text-based highlight suggestions.</p>}
+    </div>
     <div className="space-y-2">
       {suggestions.map(scene => <div key={scene.id} className="space-y-2 rounded-lg border border-black/10 px-3 py-2 dark:border-white/15">
         <div className="flex flex-wrap items-center justify-between gap-2">
