@@ -13,6 +13,14 @@ import { resolveRankingConfig } from "@/remotion/ranking-config";
 import { resolveTitleBannerConfig } from "@/remotion/title-banner-config";
 import { resolveCaptionConfig } from "@/remotion/caption-config";
 
+function captionBackgroundToPicker(value: string): { accentColor: string; captionOpacity: number } {
+  if (/^#[0-9a-fA-F]{6}$/.test(value)) return { accentColor: value, captionOpacity: 100 };
+  const match = value.match(/^rgba?\\(\\s*(\\d{1,3})\\s*,\\s*(\\d{1,3})\\s*,\\s*(\\d{1,3})(?:\\s*,\\s*(0?\\.\\d+|1(?:\\.0+)?|0))?\\s*\\)$/);
+  if (!match) return { accentColor: "#000000", captionOpacity: 65 };
+  const rgb = match.slice(1, 4).map(v => Math.max(0, Math.min(255, Number(v))).toString(16).padStart(2, "0")).join("");
+  return { accentColor: "#" + rgb, captionOpacity: Math.round(Number(match[4] ?? 1) * 100) };
+}
+
 export default async function ProjectPage({
   params,
 }: {
@@ -52,8 +60,8 @@ export default async function ProjectPage({
         textColor: v.text.baseColor, accentColor: v.text.currentColor, fontSize: v.text.fontSize }; })()
     : project.format === "caption"
       ? (() => { const v = resolveCaptionConfig(rawStyle as Parameters<typeof resolveCaptionConfig>[0]); return {
-          textColor: v.text.color, accentColor: /^#[0-9a-fA-F]{6}$/.test(v.text.backgroundColor)
-            ? v.text.backgroundColor : "#000000", fontSize: v.text.fontSize }; })()
+          textColor: v.text.color, ...captionBackgroundToPicker(v.text.backgroundColor),
+          fontSize: v.text.fontSize }; })()
       : (() => { const v = resolveTitleBannerConfig(rawStyle as Parameters<typeof resolveTitleBannerConfig>[0]); return {
           textColor: v.text.color, accentColor: v.text.strokeColor, fontSize: v.text.fontSize }; })();
 
