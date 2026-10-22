@@ -11,8 +11,8 @@ const SOURCE_TOP_HEIGHT = 900;
 const MAX_PREVIEW_WIDTH = 420;
 
 const SAMPLE_ROWS = [
-  { number: 6, title: "Sixth place", current: false },
-  { number: 5, title: "Fifth place", current: true },
+  { number: 1, title: "First place", current: true },
+  { number: 2, title: "Second place", current: false },
 ];
 
 export function KonvaCanvas({
