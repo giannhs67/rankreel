@@ -65,7 +65,7 @@ export function Caption({ clips, config = DEFAULT_CAPTION_CONFIG, studioSettings
         {clips.map((clip) => (
           <Series.Sequence key={clip.id} durationInFrames={clipFramesFor(clip.durationInSeconds, fps)}>
             <AbsoluteFill>
-              <Video src={clip.videoUrl} startFrom={trimStartFrame(clip, fps)} style={{ width: "100%", height: "100%", objectFit: "cover", filter: getClipVideoFilter(studioSettings, clip.id) }} />
+              <Video src={clip.videoUrl} startFrom={trimStartFrame(clip, fps)} style={{ width: "100%", height: "100%", objectFit: studioSettings?.cropMode === "contain" ? "contain" : "cover", transform: `scale(${(studioSettings?.cropZoom ?? 100) / 100})`, filter: getClipVideoFilter(studioSettings, clip.id) }} />
             </AbsoluteFill>
           </Series.Sequence>
         ))}
@@ -102,6 +102,13 @@ export function Caption({ clips, config = DEFAULT_CAPTION_CONFIG, studioSettings
         </AbsoluteFill>
       )}
       </AbsoluteFill>
+      {studioSettings?.overlayText?.trim() && (
+        <AbsoluteFill style={{ pointerEvents: "none", justifyContent: "flex-start", alignItems: "center", paddingTop: 125 }}>
+          <div style={{ color: "#fff", backgroundColor: "rgba(0,0,0,.72)", borderRadius: 16, fontSize: 54, fontWeight: 900, padding: "14px 30px", maxWidth: "88%", textAlign: "center", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+            {studioSettings.overlayText}
+          </div>
+        </AbsoluteFill>
+      )}
     </AbsoluteFill>
   );
 }
