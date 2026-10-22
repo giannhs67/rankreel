@@ -281,6 +281,8 @@ export function SimpleStyleEditor({
 }
 
 function rgbaToHex(rgba: string): string {
+  if (/^#[0-9a-fA-F]{6}$/.test(rgba)) return rgba;
+  if (/^#[0-9a-fA-F]{3}$/.test(rgba)) return "#" + [...rgba.slice(1)].map(ch => ch + ch).join("");
   const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
   if (!match) return "#000000";
   const [, r, g, b] = match;
