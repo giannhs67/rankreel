@@ -34,7 +34,7 @@ export function ClipFinder({ projectId, clips, ranking }: { projectId: string; c
     const ranked = captions.map(line => {
       const words = line.text.toLowerCase();
       const score = (/[!?]/.test(line.text) ? 3 : 0) +
-        (/\\b(unbelievable|impossible|crazy|amazing|never|biggest|funniest|top|best|worst|insane|look|watch|why|how)\\b/.test(words) ? 3 : 0) +
+        (/\b(unbelievable|impossible|crazy|amazing|never|biggest|funniest|top|best|worst|insane|look|watch|why|how)\b/.test(words) ? 3 : 0) +
         (line.text.length >= 25 && line.text.length <= 130 ? 1 : 0);
       return { ...line, score };
     }).filter(line => line.score >= 3).sort((a, b) => b.score - a.score || a.start - b.start).slice(0, 5);
