@@ -1,5 +1,6 @@
 import { BackgroundMusic } from "./BackgroundMusic";
 import { SoundEffects } from "./SoundEffects";
+import { TimedCaptions } from "./TimedCaptions";
 import { AbsoluteFill, Series, Video, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { DEFAULT_CAPTION_CONFIG, type CaptionConfig } from "./caption-config";
 import { clipFramesFor, getClipStartFrames, getCurrentClipIndex, getTotalDurationInFrames } from "./clip-timing";
@@ -62,6 +63,7 @@ export function Caption({ clips, config = DEFAULT_CAPTION_CONFIG, studioSettings
     <AbsoluteFill style={{ backgroundColor: "black" }}>
       <BackgroundMusic settings={studioSettings} />
       <SoundEffects settings={studioSettings} />
+      <TimedCaptions settings={studioSettings} />
       <AbsoluteFill style={{ opacity: fade, transform: `scale(${zoom})` }}>
       <Series>
         {clips.map((clip) => (
