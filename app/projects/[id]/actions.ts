@@ -217,3 +217,53 @@ export async function moveClipToPosition(projectId: string, clipId: string, targ
   }
   revalidatePath(`/projects/${projectId}`);
 }
+
+/**
+ * Change the actual Remotion composition used by preview and MP4 export.
+ * Leave uploaded clips, timing, voiceover draft and previous templates intact.
+ * A new format gets its own template when the Style editor is first opened.
+ */
+export async function changeProjectFormat(
+  projectId: string,
+  format: "ranking_list" | "title_banner" | "caption",
+) {
+  const allowed = ["ranking_list", "title_banner", "caption"];
+  if (!allowed.includes(format)) throw new Error("Unsupported video format.");
+
+  const { supabase, user } = await requireUser();
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id, format")
+    .eq("id", projectId)
+    .eq("owner_id", user.id)
+    .single();
+  if (projectError || !project) throw new Error("Project not found.");
+  if (project.format === format) return;
+
+  // Ranking is a six-clip composition. Do not discard or truncate existing clips.
+  if (format === "ranking_list") {
+    const { count, error: countError } = await supabase
+      .from("clips")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId);
+    if (countError) throw new Error(countError.message);
+    if ((count ?? 0) > 6) {
+      throw new Error("Ranking supports up to 6 clips. Remove extra clips before switching.");
+    }
+  }
+
+  // Keep old templates in storage; only unlink the incompatible template.
+  // The Style editor will create an appropriately typed template on first visit.
+  const { data: changed, error } = await supabase
+    .from("projects")
+    .update({ format, template_id: null })
+    .eq("id", projectId)
+    .eq("owner_id", user.id)
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!changed?.length) throw new Error("Format was not changed.");
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/editor`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
