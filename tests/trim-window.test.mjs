@@ -24,5 +24,9 @@ test("each Remotion composition seeks from the same source offset", () => {
   for (const filename of ["RankingList", "TitleBanner", "Caption"]) {
     const code = readFileSync(new URL("../remotion/" + filename + ".tsx", import.meta.url), "utf8");
     assert.match(code, /startFrom=\{trimStartFrame\(clip, fps\)\}/);
+    if (filename === "RankingList") {
+      assert.equal((code.match(/startFrom=\{trimStartFrame\(clip, fps\)\}/g) ?? []).length, 2,
+        "both ranking foreground and blurred background must seek to the same source position");
+    }
   }
 });
