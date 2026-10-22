@@ -45,10 +45,12 @@ export async function addClip(input: {
     }
   }
 
-  const { count } = await supabase
-    .from("clips")
-    .select("id", { count: "exact", head: true })
-    .eq("project_id", input.projectId);
+  // Use the maximum stored position: a deleted middle clip must not cause duplicate indices.
+  const { data: lastClip, error: positionError } = await supabase
+    .from("clips").select("order_index").eq("project_id", input.projectId)
+    .order("order_index", { ascending: false }).limit(1);
+  if (positionError) throw new Error(positionError.message);
+  const nextPosition = (lastClip?.[0]?.order_index ?? -1) + 1;
 
   const { error } = await supabase.from("clips").insert({
     project_id: input.projectId,
@@ -56,7 +58,7 @@ export async function addClip(input: {
     storage_path: input.storagePath,
     title: input.title,
     number: input.number,
-    order_index: count ?? 0,
+    order_index: nextPosition,
     trim_start: input.durationInSeconds != null ? 0 : null,
     trim_end: input.durationInSeconds,
   });
