@@ -31,6 +31,8 @@ export async function POST(request: Request) {
     if (error || !signed) throw new Error("Could not access the clip.");
     const response = await fetch(signed.signedUrl);
     if (!response.ok) throw new Error("Could not download the clip for local transcription.");
+    const declaredLength = Number(response.headers.get("content-length") ?? 0);
+    if (declaredLength > MAX_BYTES) throw new Error("Video exceeds the 95 MB limit.");
     const bytes = new Uint8Array(await response.arrayBuffer());
     if (bytes.byteLength > MAX_BYTES) throw new Error("Video exceeds the 95 MB offline transcription limit.");
     const transcription = await transcribeMediaLocally(bytes);
