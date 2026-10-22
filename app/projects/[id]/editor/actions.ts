@@ -133,7 +133,9 @@ export async function saveQuickStyle(
     const { data: template, error: templateError } = await supabase.from("templates")
       .select("config_json").eq("id", templateId).eq("owner_id", user.id).single();
     if (templateError || !template) throw new Error("Style template not found.");
-    stored = template.config_json;
+    const raw = template.config_json;
+    stored = raw && typeof raw === "object" && !Array.isArray(raw)
+      ? raw as Record<string, unknown> : null;
   }
 
   const format = project.format;
