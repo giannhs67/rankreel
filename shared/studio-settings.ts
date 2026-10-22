@@ -5,6 +5,9 @@ import { VIDEO_LOOKS, type VideoLook } from "./video-looks";
 
 export type StudioRenderSettings = {
   videoLook: VideoLook;
+  audioDucking?: boolean;
+  duckingLevel?: number;
+  captionHighlight?: boolean;
   cropMode: "cover" | "contain";
   cropZoom: number;
   overlayText: string;
@@ -56,6 +59,9 @@ export function parseStudioSettings(value: unknown): StudioRenderSettings | null
   const overlayText = typeof v.overlayText === "string" ? v.overlayText.slice(0, 160) : "";
   return {
     cropMode, cropZoom, overlayText,
+    audioDucking: v.audioDucking === true,
+    duckingLevel: typeof v.duckingLevel === 'number' && Number.isFinite(v.duckingLevel) ? Math.max(0, Math.min(100, v.duckingLevel)) : 25,
+    captionHighlight: v.captionHighlight === true,
     videoLook, lookIntensity, clipLooks,
     captions: v.captions, music: v.music, musicTrack, soundCues: parseSoundCues(v.soundCues), timedCaptions: parseTimedCaptions(v.timedCaptions),
     transitions: v.transitions as StudioRenderSettings["transitions"],
