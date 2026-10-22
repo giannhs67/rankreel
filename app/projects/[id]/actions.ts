@@ -133,8 +133,13 @@ export async function deleteClip(projectId: string, clipId: string, _storagePath
 
   // Storage cleanup is best-effort. A failed cleanup can leave an orphaned file
   // but never breaks a surviving clip or prevents the UI from updating.
-  const { error: storageError } = await supabase.storage.from("clips").remove([clip.storage_path]);
-  if (storageError) console.error("[clips] storage cleanup failed:", storageError.message);
+  // Split scenes can reference the same underlying file. Delete it only if unreferenced.
+  const { count, error: refError } = await supabase.from("clips")
+    .select("id", { count: "exact", head: true }).eq("storage_path", clip.storage_path);
+  if (!refError && count === 0) {
+    const { error: storageError } = await supabase.storage.from("clips").remove([clip.storage_path]);
+    if (storageError) console.error("[clips] storage cleanup failed:", storageError.message);
+  }
 
   revalidatePath(`/projects/${projectId}`);
 }
