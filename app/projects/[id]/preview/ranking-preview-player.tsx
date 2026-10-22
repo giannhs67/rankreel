@@ -1,21 +1,13 @@
 "use client";
 
 import { Player } from "@remotion/player";
-import { useState } from "react";
-import { parseStudioSettings, type StudioRenderSettings } from "@/shared/studio-settings";
+import { useStudioPreviewSettings } from "@/lib/use-studio-preview-settings";
 import { RankingList, getRankingListMetadata, type RankingListProps } from "@/remotion/RankingList";
 import { useLoadFont } from "@/lib/use-load-font";
 
 export function RankingPreviewPlayer(props: RankingListProps & { customFontUrl: string | null }) {
   const { customFontUrl, ...playerProps } = props;
-  const [studioSettings] = useState<StudioRenderSettings | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const projectId = window.location.pathname.split("/")[2];
-      const raw = window.localStorage.getItem(`short-tube-studio-${projectId}`);
-      return raw ? parseStudioSettings(JSON.parse(raw)) : null;
-    } catch { return null; }
-  });
+  const studioSettings = useStudioPreviewSettings();
   const { fps, durationInFrames, width, height } = getRankingListMetadata(playerProps);
 
   // Ensures the Google/custom font is actually loaded in the browser before the Player
