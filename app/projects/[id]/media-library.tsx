@@ -14,7 +14,7 @@ export function MediaLibrary({ projectId, clips }: { projectId: string; clips: M
   const filtered = unique.filter(c => c.title.toLowerCase().includes(search.toLowerCase()));
   return <section className="space-y-3 rounded-xl border border-black/10 p-4 dark:border-white/15">
     <div><h2 className="font-semibold">Media Library · Project clips</h2>
-      <p className="text-xs opacity-60">Reuse an uploaded video without reuploading. This library contains only this project's videos.</p>
+      <p className="text-xs opacity-60">Reuse an uploaded video without reuploading. This library contains only videos belonging to this project.</p>
     </div>
     <input aria-label="Search media" placeholder="Search videos…" value={search} onChange={e => setSearch(e.target.value)}
       className="w-full rounded-lg border border-black/15 bg-transparent px-3 py-2 text-sm dark:border-white/20" />
