@@ -166,7 +166,7 @@ export function SortableClipList({ projectId, clips, ranking = false }: { projec
                 </select>
               </label>
             </div>
-            <ClipRow projectId={projectId} clip={clip} isFirst={index === 0} isLast={index === clips.length - 1} />
+            <ClipRow projectId={projectId} clip={clip} isFirst={index === 0} isLast={index === clips.length - 1} ranking={ranking} />
           </li>
         ))}
       </ul>
