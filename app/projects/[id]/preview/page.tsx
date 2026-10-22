@@ -17,11 +17,13 @@ const TITLES: Record<CompositionFormat, string> = {
 };
 
 export default async function ProjectPreviewPage({
-  params,
+  params, searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ inline?: string }>;
 }) {
   const { id } = await params;
+  const inline = (await searchParams).inline === "1";
 
   const supabase = await createClient();
   const {
@@ -63,10 +65,10 @@ export default async function ProjectPreviewPage({
   }
 
   return (
-    <div className="min-h-screen">
-      <AppHeader email={user.email ?? ""} />
-      <main className="mx-auto max-w-2xl space-y-6 p-6">
-        <div>
+    <div className={inline ? "min-h-screen bg-black text-white" : "min-h-screen"}>
+      {!inline && <AppHeader email={user.email ?? ""} />}
+      <main className={inline ? "mx-auto w-full max-w-[400px] p-2" : "mx-auto max-w-2xl space-y-6 p-6"}>
+        {!inline && <div>
           <Link
             href={`/projects/${id}`}
             className="text-sm text-black/50 hover:underline dark:text-white/50"
@@ -74,7 +76,7 @@ export default async function ProjectPreviewPage({
             ← {projectName}
           </Link>
           <h1 className="mt-1 text-xl font-semibold">{TITLES[format]}</h1>
-        </div>
+        </div>}
 
         {clipCount === 0 ? (
           <p className="text-sm text-black/50 dark:text-white/50">
