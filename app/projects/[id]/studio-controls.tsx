@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { MusicControls } from "./music-controls";
+import type { MusicTrack } from "@/shared/music-track";
 import { VIDEO_LOOKS, getVideoLookFilter, type VideoLook } from "@/shared/video-looks";
 
 type StudioSettings = {
@@ -12,6 +14,7 @@ type StudioSettings = {
   script: string;
   captions: boolean;
   music: boolean;
+  musicTrack: MusicTrack | null;
   transitions: "cut" | "fade" | "zoom";
   captionStyle: "bold" | "minimal" | "karaoke";
   volume: number;
@@ -21,7 +24,7 @@ type StudioSettings = {
 const defaults: StudioSettings = {
   videoLook: "original", lookIntensity: 100, clipLooks: {},
   mode: "simple", voice: "deep", script: "", captions: true,
-  music: true, transitions: "cut", captionStyle: "bold",
+  musicTrack: null, music: true, transitions: "cut", captionStyle: "bold",
   volume: 25, autoCreate: false,
 };
 
@@ -49,9 +52,9 @@ export function StudioControls({ projectId, ranking = false, clips = [] }: { pro
 
   useEffect(() => {
     if (!settingsLoaded) return;
-    try { window.localStorage.setItem(storageKey, JSON.stringify(settings)); }
+    try { window.localStorage.setItem(storageKey, JSON.stringify(settings)); window.dispatchEvent(new Event(`short-tube-studio-saved-${projectId}`)); }
     catch { /* Storage can be disabled in private browsing */ }
-  }, [settings, settingsLoaded, storageKey]);
+  }, [settings, settingsLoaded, storageKey, projectId]);
 
   // Receive preset and script selections from the Creator Toolkit on the same page.
   // A direct event avoids stale localStorage overwrites and does not need a reload.
@@ -213,8 +216,9 @@ export function StudioControls({ projectId, ranking = false, clips = [] }: { pro
       <p className="text-xs text-black/50 dark:text-white/50">Browser voice preview uses your device voice. On Windows, MP4 export uses installed Windows speech voices; the two may sound different.</p>
       <div className="flex flex-wrap gap-4 text-sm">
         <label className="flex items-center gap-2"><input type="checkbox" checked={settings.captions} onChange={e => change({ captions: e.target.checked })}/> {ranking ? "Clip title overlays" : "Show on-screen titles / captions"}</label>
-        <span className="text-xs text-black/50 dark:text-white/50">Per-word subtitles and background music are not active yet.</span>
+        <span className="text-xs text-black/50 dark:text-white/50">Per-word subtitles are not active yet.</span>
       </div>
+      {settingsLoaded && <MusicControls projectId={projectId} track={settings.musicTrack} enabled={settings.music} volume={settings.volume} onChange={change} />}
       {settings.mode === "advanced" && ranking && (
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="space-y-1 text-sm">
@@ -251,7 +255,7 @@ export function StudioControls({ projectId, ranking = false, clips = [] }: { pro
         </label>
       </div>
       <p className="text-xs text-black/50 dark:text-white/50">
-        Local autosave, Undo/Redo and settings import/export are available. Ranking effects are limited to ranking exports. Offline Windows narration is wired into all MP4 formats but awaits a real Windows render test. Automatic editing, timed captions and music are not yet available.
+        Local autosave, Undo/Redo and settings import/export are available. Ranking effects are limited to ranking exports. Offline Windows narration is wired into all MP4 formats but awaits a real Windows render test. Automatic editing and timed captions are not yet available. Music imports require host dependencies.
       </p>
     </section>
   );

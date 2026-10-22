@@ -1,3 +1,4 @@
+import { BackgroundMusic } from "./BackgroundMusic";
 import { AbsoluteFill, Series, Video, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { DEFAULT_TITLE_BANNER_CONFIG, type TitleBannerConfig } from "./title-banner-config";
 import { clipFramesFor, getClipStartFrames, getCurrentClipIndex, getTotalDurationInFrames } from "./clip-timing";
@@ -53,6 +54,7 @@ export function TitleBanner({ clips, config = DEFAULT_TITLE_BANNER_CONFIG, studi
 
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
+      <BackgroundMusic settings={studioSettings} />
       <AbsoluteFill style={{ opacity: fade, transform: `scale(${zoom})` }}>
       <Series>
         {clips.map((clip) => (

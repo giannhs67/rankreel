@@ -1,3 +1,4 @@
+import { BackgroundMusic } from "./BackgroundMusic";
 import { AbsoluteFill, Series, Video, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { DEFAULT_CAPTION_CONFIG, type CaptionConfig } from "./caption-config";
 import { clipFramesFor, getClipStartFrames, getCurrentClipIndex, getTotalDurationInFrames } from "./clip-timing";
@@ -58,6 +59,7 @@ export function Caption({ clips, config = DEFAULT_CAPTION_CONFIG, studioSettings
 
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
+      <BackgroundMusic settings={studioSettings} />
       <AbsoluteFill style={{ opacity: fade, transform: `scale(${zoom})` }}>
       <Series>
         {clips.map((clip) => (

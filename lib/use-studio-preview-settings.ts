@@ -27,9 +27,11 @@ export function useStudioPreviewSettings(): StudioRenderSettings | null {
     };
     window.addEventListener("storage", onStorage);
     window.addEventListener("focus", refresh);
+    window.addEventListener(`short-tube-studio-saved-${projectId}`, refresh);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", refresh);
+      window.removeEventListener(`short-tube-studio-saved-${projectId}`, refresh);
     };
   }, []);
 

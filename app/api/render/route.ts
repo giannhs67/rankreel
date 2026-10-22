@@ -60,6 +60,15 @@ export async function POST(request: Request) {
   if (body?.studioSettings != null && !studioSettings) {
     return NextResponse.json({ error: "Invalid studio settings" }, { status: 400 });
   }
+  if (studioSettings?.music && studioSettings.musicTrack) {
+    const track = studioSettings.musicTrack;
+    if (!track.storagePath.startsWith(`${projectId}/music/`)) {
+      return NextResponse.json({ error: "Music belongs to another project" }, { status: 400 });
+    }
+    const { data, error } = await supabase.storage.from("clips").createSignedUrl(track.storagePath, 604800);
+    if (error || !data) return NextResponse.json({ error: "Music file is unavailable. Import it again." }, { status: 400 });
+    track.url = data.signedUrl;
+  }
   const renderProps = await getRenderPropsForFormat(supabase, format, projectId);
   if (!renderProps) {
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
