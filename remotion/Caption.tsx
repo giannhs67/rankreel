@@ -1,8 +1,9 @@
-import { AbsoluteFill, Series, Video, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Series, Video, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { DEFAULT_CAPTION_CONFIG, type CaptionConfig } from "./caption-config";
 import { clipFramesFor, getClipStartFrames, getCurrentClipIndex, getTotalDurationInFrames } from "./clip-timing";
 import { entranceStyle } from "./entrance-style";
 import { trimStartFrame } from "../shared/trim-window.mjs";
+import type { StudioRenderSettings } from "@/shared/studio-settings";
 
 // Each clip's `title` doubles as its full caption sentence, shown for that clip's whole
 // duration. This is NOT true word-by-word sync — that needs per-word timestamps, which means
@@ -21,6 +22,7 @@ export type CaptionProps = {
   projectName: string;
   clips: CaptionClip[];
   config: CaptionConfig;
+  studioSettings?: StudioRenderSettings;
 };
 
 const FPS = 30;
@@ -36,7 +38,7 @@ export function getCaptionMetadata(props: CaptionProps) {
   };
 }
 
-export function Caption({ clips, config = DEFAULT_CAPTION_CONFIG }: CaptionProps) {
+export function Caption({ clips, config = DEFAULT_CAPTION_CONFIG, studioSettings }: CaptionProps) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -45,9 +47,17 @@ export function Caption({ clips, config = DEFAULT_CAPTION_CONFIG }: CaptionProps
   const current = clips[currentIndex];
   const framesSinceReveal = frame - startFrames[currentIndex];
   const style = entranceStyle(config.animation, framesSinceReveal, fps);
+  const transition = studioSettings?.transitions ?? "cut";
+  const fade = transition === "fade"
+    ? interpolate(framesSinceReveal, [0, Math.max(1, Math.round(fps * 0.25))], [0, 1], { extrapolateRight: "clamp" })
+    : 1;
+  const zoom = transition === "zoom"
+    ? interpolate(framesSinceReveal, [0, Math.max(1, Math.round(fps * 0.3))], [1.12, 1], { extrapolateRight: "clamp" })
+    : 1;
 
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
+      <AbsoluteFill style={{ opacity: fade, transform: `scale(${zoom})` }}>
       <Series>
         {clips.map((clip) => (
           <Series.Sequence key={clip.id} durationInFrames={clipFramesFor(clip.durationInSeconds, fps)}>
@@ -58,7 +68,7 @@ export function Caption({ clips, config = DEFAULT_CAPTION_CONFIG }: CaptionProps
         ))}
       </Series>
 
-      {current && (
+      {(studioSettings?.captions ?? true) && current && (
         <AbsoluteFill style={{ justifyContent: "flex-start", alignItems: "center" }}>
           <div
             style={{
@@ -88,6 +98,7 @@ export function Caption({ clips, config = DEFAULT_CAPTION_CONFIG }: CaptionProps
           </div>
         </AbsoluteFill>
       )}
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 }
