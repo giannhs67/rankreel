@@ -55,9 +55,16 @@ export function ClipRow({
       >
         <form
           action={async (formData) => {
-            await updateClip(projectId, clip.id, formData);
-            setEditing(false);
-            router.refresh();
+            setActionError(null);
+            startTransition(async () => {
+              try {
+                await updateClip(projectId, clip.id, formData);
+                setEditing(false);
+                router.refresh();
+              } catch (error) {
+                setActionError(error instanceof Error ? error.message : "Could not save clip.");
+              }
+            });
           }}
           className="flex flex-col gap-2 sm:flex-row sm:items-center"
         >
@@ -91,9 +98,11 @@ export function ClipRow({
             defaultValue={clip.trim_end ?? ""}
             className="w-28 rounded-md border border-black/15 bg-transparent px-3 py-1.5 text-sm dark:border-white/15"
           />
+          {actionError && <p role="alert" className="w-full text-sm text-red-600 dark:text-red-400">{actionError}</p>}
           <div className="flex gap-2">
             <button
               type="submit"
+              disabled={pending}
               className="rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background"
             >
               Save
