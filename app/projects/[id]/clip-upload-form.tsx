@@ -39,6 +39,15 @@ export function ClipUploadForm({ projectId, nextRankingNumber }: { projectId: st
       return;
     }
 
+    if (!title || title.length > 180) {
+      setError("Enter a title of 1–180 characters.");
+      return;
+    }
+    if (numberRaw && (!Number.isInteger(Number(numberRaw)) || Number(numberRaw) < 1 || Number(numberRaw) > 6)) {
+      setError("Ranking number must be between 1 and 6.");
+      return;
+    }
+
     setBusy(true);
     setError(null);
 
@@ -58,13 +67,20 @@ export function ClipUploadForm({ projectId, nextRankingNumber }: { projectId: st
         return;
       }
 
-      await addClip({
-        projectId,
-        storagePath,
-        title,
-        number: numberRaw === "" ? null : Number(numberRaw),
-        durationInSeconds,
-      });
+      try {
+        await addClip({
+          projectId,
+          storagePath,
+          title,
+          number: numberRaw === "" ? null : Number(numberRaw),
+          durationInSeconds,
+        });
+      } catch (saveError) {
+        // Do not leave an orphaned Storage file if project validation or DB insertion failed.
+        const { error: cleanupError } = await supabase.storage.from("clips").remove([storagePath]);
+        if (cleanupError) console.error("[upload] orphan cleanup failed:", cleanupError.message);
+        throw saveError;
+      }
 
       formRef.current?.reset();
       router.refresh();
