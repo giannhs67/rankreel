@@ -23,6 +23,9 @@ export async function addClip(input: {
 }) {
   const { supabase, user } = await requireUser();
 
+  if (!input.storagePath.startsWith(`${input.projectId}/`) || input.storagePath.includes("..")) {
+    throw new Error("Invalid clip storage path.");
+  }
   if (!input.title.trim() || input.title.length > 180) {
     throw new Error("Clip title must be between 1 and 180 characters.");
   }
@@ -106,19 +109,32 @@ export async function updateClip(
   const { error } = await supabase
     .from("clips")
     .update({ title, number, trim_start, trim_end })
-    .eq("id", clipId);
+    .eq("id", clipId)
+    .eq("project_id", projectId);
 
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}`);
 }
 
-export async function deleteClip(projectId: string, clipId: string, storagePath: string) {
+export async function deleteClip(projectId: string, clipId: string, _storagePath: string) {
   const { supabase } = await requireUser();
 
-  await supabase.storage.from("clips").remove([storagePath]);
+  // Read the trusted path from the database, not from the caller.
+  const { data: clip, error: lookupError } = await supabase
+    .from("clips").select("storage_path")
+    .eq("id", clipId).eq("project_id", projectId).single();
+  if (lookupError || !clip) throw new Error("Clip not found.");
 
-  const { error } = await supabase.from("clips").delete().eq("id", clipId);
+  // Remove the record first: never leave a clip referring to an already-deleted video.
+  const { data: removed, error } = await supabase.from("clips")
+    .delete().eq("id", clipId).eq("project_id", projectId).select("id");
   if (error) throw new Error(error.message);
+  if (!removed?.length) throw new Error("Clip was not deleted.");
+
+  // Storage cleanup is best-effort. A failed cleanup can leave an orphaned file
+  // but never breaks a surviving clip or prevents the UI from updating.
+  const { error: storageError } = await supabase.storage.from("clips").remove([clip.storage_path]);
+  if (storageError) console.error("[clips] storage cleanup failed:", storageError.message);
 
   revalidatePath(`/projects/${projectId}`);
 }
@@ -144,12 +160,14 @@ export async function moveClip(projectId: string, clipId: string, direction: "up
   const { error: err1 } = await supabase
     .from("clips")
     .update({ order_index: b.order_index })
+    .eq("project_id", projectId)
     .eq("id", a.id);
   if (err1) throw new Error(err1.message);
 
   const { error: err2 } = await supabase
     .from("clips")
     .update({ order_index: a.order_index })
+    .eq("project_id", projectId)
     .eq("id", b.id);
   if (err2) throw new Error(err2.message);
 
