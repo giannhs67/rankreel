@@ -82,8 +82,38 @@ export function SortableClipList({ projectId, clips, ranking = false }: { projec
     });
   }
 
+  const durations = clips.map(clip =>
+    clip.trim_start != null && clip.trim_end != null && clip.trim_end > clip.trim_start
+      ? clip.trim_end - clip.trim_start : null,
+  );
+  const knownDuration = durations.reduce<number>((sum, duration) => sum + (duration ?? 0), 0);
+  const hasUnknownDuration = durations.some(duration => duration == null);
+
   return (
     <div className="space-y-3">
+      {!!clips.length && (
+        <section aria-label="Video timeline" className="rounded-xl border border-black/10 p-3 dark:border-white/15">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold">Video timeline · {clips.length} scenes</h3>
+            <span className="text-xs tabular-nums text-black/55 dark:text-white/55">
+              {hasUnknownDuration ? `Known duration ${knownDuration.toFixed(1)}s + unmeasured clips` : `Total ${knownDuration.toFixed(1)}s`}
+            </span>
+          </div>
+          <div className="flex min-h-16 gap-1 overflow-x-auto pb-1" role="list" aria-label="Clip order">
+            {clips.map((clip, index) => (
+              <div key={clip.id} role="listitem" title={clip.title}
+                style={{ flexGrow: durations[index] ?? 3, flexBasis: "76px" }}
+                className="min-w-[76px] overflow-hidden rounded-lg border border-amber-500/30 bg-amber-400/10 px-2 py-2">
+                <p className="truncate text-xs font-semibold">{ranking && clip.number != null ? `#${clip.number} · ` : ""}{index + 1}. {clip.title}</p>
+                <p className="mt-1 text-[11px] tabular-nums text-black/55 dark:text-white/55">
+                  {durations[index] == null ? "Duration unknown" : `${durations[index]!.toFixed(1)}s`}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-1 text-[11px] text-black/50 dark:text-white/50">Segment widths reflect known durations. Reorder scenes below; trim inside each clip.</p>
+        </section>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         {ranking && <button type="button" onClick={autoRank} disabled={pending || !clips.length}
           className="rounded-lg bg-amber-400 px-3 py-2 text-xs font-semibold text-black disabled:opacity-50">
