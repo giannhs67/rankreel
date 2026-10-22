@@ -21,22 +21,32 @@ const defaults: StudioSettings = {
 };
 
 export function StudioControls({ projectId, ranking = false }: { projectId: string; ranking?: boolean }) {
-  const [settings, setSettings] = useState<StudioSettings>(() => {
-    if (typeof window === "undefined") return defaults;
-    try {
-      const raw = window.localStorage.getItem(`short-tube-studio-${projectId}`);
-      return raw ? { ...defaults, ...JSON.parse(raw) } : defaults;
-    } catch { return defaults; }
-  });
+  const [settings, setSettings] = useState<StudioSettings>(defaults);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [voicePreviewing, setVoicePreviewing] = useState(false);
   const [history, setHistory] = useState<StudioSettings[]>([]);
   const [future, setFuture] = useState<StudioSettings[]>([]);
   const storageKey = `short-tube-studio-${projectId}`;
 
+  // Load saved settings after hydration; do not overwrite them with defaults on first render.
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<StudioSettings>;
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          setSettings({ ...defaults, ...parsed });
+        }
+      }
+    } catch { /* Malformed or disabled browser storage falls back to defaults */ }
+    setSettingsLoaded(true);
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!settingsLoaded) return;
     try { window.localStorage.setItem(storageKey, JSON.stringify(settings)); }
     catch { /* Storage can be disabled in private browsing */ }
-  }, [settings, storageKey]);
+  }, [settings, settingsLoaded, storageKey]);
 
   // Receive preset and script selections from the Creator Toolkit on the same page.
   // A direct event avoids stale localStorage overwrites and does not need a reload.
