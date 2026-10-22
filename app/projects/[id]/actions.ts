@@ -23,6 +23,28 @@ export async function addClip(input: {
 }) {
   const { supabase, user } = await requireUser();
 
+  if (!input.title.trim() || input.title.length > 180) {
+    throw new Error("Clip title must be between 1 and 180 characters.");
+  }
+  if (input.number !== null && (!Number.isInteger(input.number) || input.number < 1 || input.number > 6)) {
+    throw new Error("Ranking number must be between 1 and 6.");
+  }
+  if (input.durationInSeconds !== null && (!Number.isFinite(input.durationInSeconds) || input.durationInSeconds <= 0)) {
+    throw new Error("Invalid source video duration.");
+  }
+  const { data: project, error: projectError } = await supabase
+    .from("projects").select("id, format").eq("id", input.projectId).single();
+  if (projectError || !project) throw new Error("Project not found.");
+  const { data: existingClips, error: clipsError } = await supabase
+    .from("clips").select("number").eq("project_id", input.projectId);
+  if (clipsError) throw new Error(clipsError.message);
+  if (project.format === "ranking_list") {
+    if ((existingClips?.length ?? 0) >= 6) throw new Error("Ranking Studio supports up to six clips.");
+    if (input.number !== null && existingClips?.some(clip => clip.number === input.number)) {
+      throw new Error("Ranking #" + input.number + " already exists.");
+    }
+  }
+
   const { count } = await supabase
     .from("clips")
     .select("id", { count: "exact", head: true })
@@ -51,12 +73,33 @@ export async function updateClip(
   const { supabase } = await requireUser();
 
   const title = String(formData.get("title") ?? "").trim();
+  if (!title || title.length > 180) throw new Error("Title must be between 1 and 180 characters.");
   const numberRaw = String(formData.get("number") ?? "").trim();
   const number = numberRaw === "" ? null : Number(numberRaw);
   const trimStartRaw = String(formData.get("trim_start") ?? "").trim();
   const trimEndRaw = String(formData.get("trim_end") ?? "").trim();
   const trim_start = trimStartRaw === "" ? null : Number(trimStartRaw);
   const trim_end = trimEndRaw === "" ? null : Number(trimEndRaw);
+
+  if (number !== null && (!Number.isInteger(number) || number < 1 || number > 6)) {
+    throw new Error("Ranking number must be between 1 and 6.");
+  }
+  if ((trim_start === null) !== (trim_end === null)) {
+    throw new Error("Enter both start and end times, or leave both empty.");
+  }
+  if (trim_start !== null && trim_end !== null &&
+      (!Number.isFinite(trim_start) || !Number.isFinite(trim_end) || trim_start < 0 || trim_end <= trim_start)) {
+    throw new Error("Trim end must be greater than trim start.");
+  }
+  const { data: currentProject, error: projectError } = await supabase
+    .from("projects").select("format").eq("id", projectId).single();
+  if (projectError || !currentProject) throw new Error("Project not found.");
+  if (currentProject.format === "ranking_list" && number !== null) {
+    const { data: duplicate, error: duplicateError } = await supabase
+      .from("clips").select("id").eq("project_id", projectId).eq("number", number).neq("id", clipId).limit(1);
+    if (duplicateError) throw new Error(duplicateError.message);
+    if (duplicate?.length) throw new Error("Ranking #" + number + " already exists.");
+  }
 
   const { error } = await supabase
     .from("clips")
