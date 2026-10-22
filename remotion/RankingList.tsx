@@ -1,5 +1,6 @@
 import { BackgroundMusic } from "./BackgroundMusic";
 import { SoundEffects } from "./SoundEffects";
+import { TimedCaptions } from "./TimedCaptions";
 import { AbsoluteFill, Series, Video, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import type { StudioRenderSettings } from "@/shared/studio-settings";
 import { getClipVideoFilter } from "@/shared/video-looks";
@@ -61,6 +62,7 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
     <AbsoluteFill style={{ backgroundColor: "black" }}>
       <BackgroundMusic settings={studioSettings} />
       <SoundEffects settings={studioSettings} />
+      <TimedCaptions settings={studioSettings} />
       {/* Top: blurred backdrop of the current clip + the ranking list */}
       <AbsoluteFill style={{ height: TOP_HEIGHT, overflow: "hidden" }}>
         <Series>
