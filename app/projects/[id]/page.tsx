@@ -35,6 +35,9 @@ export default async function ProjectPage({
     .eq("project_id", id)
     .order("order_index", { ascending: true });
 
+  const usedRanks = new Set((clips ?? []).map(clip => clip.number).filter((number): number is number => number !== null));
+  const nextRankingNumber = [6, 5, 4, 3, 2, 1].find(number => !usedRanks.has(number)) ?? 0;
+
   const { data: jobs } = await supabase
     .from("jobs")
     .select("id, status, progress, output_path, error, created_at")
@@ -104,7 +107,7 @@ export default async function ProjectPage({
               All six ranking positions are filled. Edit, reorder or remove a clip to change the list.
             </p>
           ) : (
-            <ClipUploadForm projectId={project.id} nextRankingNumber={project.format === "ranking_list" ? Math.max(1, 6 - (clips?.length ?? 0)) : 0} />
+            <ClipUploadForm projectId={project.id} nextRankingNumber={project.format === "ranking_list" ? nextRankingNumber : 0} />
           )}
         </section>
 
