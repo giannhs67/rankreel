@@ -105,7 +105,7 @@ export function StudioControls({ projectId, ranking = false }: { projectId: stri
             <option value="documentary">Documentary</option>
           </select>
         </label>
-        {ranking && <label className="space-y-1 text-sm">
+        {<label className="space-y-1 text-sm">
           <span className="font-medium">Transitions</span>
           <select className={input} value={settings.transitions} onChange={e => change({ transitions: e.target.value as StudioSettings["transitions"] })}>
             <option value="cut">Quick cut</option><option value="fade">Fade</option><option value="zoom">Zoom</option>
@@ -134,8 +134,8 @@ export function StudioControls({ projectId, ranking = false }: { projectId: stri
       }}>{voicePreviewing ? "Stop voice preview" : "Listen to browser voice preview"}</button>
       <p className="text-xs text-black/50 dark:text-white/50">Browser voice preview uses your device voice. On Windows, MP4 export uses installed Windows speech voices; the two may sound different.</p>
       <div className="flex flex-wrap gap-4 text-sm">
-        {ranking && <label className="flex items-center gap-2"><input type="checkbox" checked={settings.captions} onChange={e => change({ captions: e.target.checked })}/> Clip title overlays</label>}
-        <span className="text-xs text-black/50 dark:text-white/50">Timed captions and background music are planned, not active.</span>
+        <label className="flex items-center gap-2"><input type="checkbox" checked={settings.captions} onChange={e => change({ captions: e.target.checked })}/> {ranking ? "Clip title overlays" : "Show on-screen titles / captions"}</label>
+        <span className="text-xs text-black/50 dark:text-white/50">Per-word subtitles and background music are not active yet.</span>
       </div>
       {settings.mode === "advanced" && ranking && (
         <div className="grid gap-4 sm:grid-cols-2">
