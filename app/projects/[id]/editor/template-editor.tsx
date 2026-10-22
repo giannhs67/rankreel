@@ -11,7 +11,7 @@ import { applyTemplate, saveAsTemplate, updateTemplateConfig } from "./actions";
 const KonvaCanvas = dynamic(() => import("./konva-canvas").then((m) => m.KonvaCanvas), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[640px] w-[360px] items-center justify-center rounded-lg border border-black/10 text-sm text-black/40 dark:border-white/10 dark:text-white/40">
+    <div className="flex h-[640px] w-full max-w-[420px] items-center justify-center rounded-2xl border border-white/10 bg-black/30 text-sm text-white/45">
       Loading canvas…
     </div>
   ),
