@@ -22,7 +22,11 @@ export function inspectProject({ clips = [], ranking = false, settings = null, l
       seen.add(clip.number);
     }
     const license = licenses[clip.id];
-    if (!license || license.status === "unknown") issues.push({ level: "warning", id: "rights-" + clip.id, message: "Rights not recorded for " + (clip.title || "clip") + "." });
+    if (!license || license.status === "unknown") {
+      issues.push({ level: "warning", id: "rights-" + clip.id, message: "Rights not recorded for " + (clip.title || "clip") + "." });
+    } else if (["licensed", "permission"].includes(license.status) && !String(license.source ?? "").trim()) {
+      issues.push({ level: "warning", id: "source-" + clip.id, message: "Record the original source/permission for " + (clip.title || "clip") + "." });
+    }
   }
   if (settings?.script?.trim() && settings.script.trim().length > 5000) {
     issues.push({ level: "error", id: "script", message: "Voiceover script exceeds the 5,000-character limit." });
