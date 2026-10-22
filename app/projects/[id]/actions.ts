@@ -326,3 +326,35 @@ export async function restoreRankingNumbers(
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/preview`);
 }
+
+/** Split a scene into two non-destructive timeline entries referencing its original media. */
+export async function splitScene(projectId: string, clipId: string, splitAt: number) {
+  if (!Number.isFinite(splitAt)) throw new Error("Invalid split time.");
+  const { supabase, user } = await requireUser();
+  const { data: project } = await supabase.from("projects").select("format")
+    .eq("id", projectId).eq("owner_id", user.id).single();
+  if (!project) throw new Error("Project not found.");
+  if (project.format === "ranking_list") throw new Error("Split is for Story and Title formats only.");
+  const { data: scenes, error } = await supabase.from("clips")
+    .select("id, title, number, storage_path, trim_start, trim_end, order_index")
+    .eq("project_id", projectId).order("order_index", { ascending: true });
+  if (error || !scenes) throw new Error(error?.message ?? "Scenes unavailable.");
+  const source = scenes.find(scene => scene.id === clipId);
+  if (!source || source.trim_start == null || source.trim_end == null ||
+      splitAt <= source.trim_start + 0.1 || splitAt >= source.trim_end - 0.1) {
+    throw new Error("Set a valid trim window and split at least 0.1s from both edges.");
+  }
+  const { data: second, error: insertError } = await supabase.from("clips").insert({
+    owner_id: user.id, project_id: projectId, storage_path: source.storage_path,
+    title: source.title + " · part 2", number: null,
+    trim_start: splitAt, trim_end: source.trim_end,
+    order_index: Math.max(0, ...scenes.map(scene => scene.order_index)) + 1,
+  }).select("id").single();
+  if (insertError || !second) throw new Error(insertError?.message ?? "Split failed.");
+  const { error: trimError } = await supabase.from("clips").update({ trim_end: splitAt })
+    .eq("id", source.id).eq("project_id", projectId);
+  if (trimError) throw new Error("Second segment added; could not update the first segment: " + trimError.message);
+  await moveClipToPosition(projectId, second.id, scenes.findIndex(scene => scene.id === clipId) + 1);
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/preview`);
+}
