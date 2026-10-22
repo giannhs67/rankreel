@@ -129,6 +129,19 @@ export function CreatorTools({ projectId, clips, ranking }: { projectId: string;
               <p className="mb-2 text-xs font-semibold text-amber-300">Ranking story suggestions</p>
               <p className="text-sm">Hook: These {clips.length || 6} moments get crazier with every rank. Wait until number one.</p>
               <p className="mt-1 text-xs text-white/60">Tip: Give each rank a short title and reveal the strongest clip last.</p>
+              <button type="button" className="mt-3 rounded-lg bg-amber-400 px-3 py-2 text-xs font-semibold text-black" onClick={() => {
+                const hook = "These " + (clips.length || 6) + " moments get crazier with every rank. Wait until number one.";
+                const key = "short-tube-studio-" + projectId;
+                const stored = safeJSON(localStorage.getItem(key));
+                const base = stored && typeof stored === "object" && !Array.isArray(stored) ? stored : {};
+                const script = String(base && "script" in base ? base.script ?? "" : "").trim();
+                const nextScript = script ? hook + "\n\n" + script : hook;
+                const next = { ...base, script: nextScript };
+                localStorage.setItem(key, JSON.stringify(next));
+                window.dispatchEvent(new CustomEvent("short-tube-studio-update-" + projectId, { detail: { script: nextScript } }));
+                setSettings(next);
+                setNote("Ranking hook added to the narration script.");
+              }}>Add hook to voiceover</button>
             </div>
           )}
           <label className="block space-y-1 text-xs text-white/70">Version A<textarea value={scriptA} onChange={e => setScriptA(e.target.value)} rows={3} placeholder="Write hook A..." className="w-full rounded-lg border border-white/20 bg-[#262a34] p-3 text-sm text-white" /></label>
