@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { VIDEO_LOOKS, type VideoLook } from "@/shared/video-looks";
+import { VIDEO_LOOKS, getVideoLookFilter, type VideoLook } from "@/shared/video-looks";
 
 type StudioSettings = {
   videoLook: VideoLook;
+  lookIntensity: number;
+  clipLooks: Record<string, { look: VideoLook; intensity: number }>;
   mode: "simple" | "advanced";
   voice: "deep" | "energetic" | "documentary";
   script: string;
@@ -17,7 +19,7 @@ type StudioSettings = {
 };
 
 const defaults: StudioSettings = {
-  videoLook: "original",
+  videoLook: "original", lookIntensity: 100, clipLooks: {},
   mode: "simple", voice: "deep", script: "", captions: true,
   music: true, transitions: "cut", captionStyle: "bold",
   volume: 25, autoCreate: false,
@@ -142,6 +144,18 @@ export function StudioControls({ projectId, ranking = false }: { projectId: stri
           ))}
         </div>
       </div>
+      <label className="block space-y-2 text-sm">
+        <span className="flex justify-between"><span>Filter intensity</span><strong>{settings.lookIntensity}%</strong></span>
+        <input type="range" min={0} max={100} value={settings.lookIntensity}
+          onChange={e => change({ lookIntensity: Number(e.target.value) })} className="w-full accent-amber-400" />
+        <span className="block text-xs text-black/50 dark:text-white/50">
+          Applies to every clip unless you set an individual look below.
+        </span>
+        <span className="block h-7 rounded-lg" style={{
+          background: "linear-gradient(115deg,#ed6c46,#6d74bb,#1d294a)",
+          filter: getVideoLookFilter(settings.videoLook, settings.lookIntensity),
+        }} />
+      </label>
       <label className="block space-y-1 text-sm">
         <span className="font-medium">Voiceover script</span>
         <textarea rows={settings.mode === "advanced" ? 6 : 3} value={settings.script}
