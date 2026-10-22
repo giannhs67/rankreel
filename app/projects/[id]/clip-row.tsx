@@ -3,18 +3,20 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Clip } from "@/shared/types";
-import { deleteClip, moveClip, updateClip } from "./actions";
+import { deleteClip, moveClip, updateClip, splitScene } from "./actions";
 
 export function ClipRow({
   projectId,
   clip,
   isFirst,
   isLast,
+  ranking = false,
 }: {
   projectId: string;
   clip: Pick<Clip, "id" | "title" | "number" | "storage_path" | "trim_start" | "trim_end">;
   isFirst: boolean;
   isLast: boolean;
+  ranking?: boolean;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -30,6 +32,19 @@ export function ClipRow({
       } catch (error) {
         setActionError(error instanceof Error ? error.message : "Could not move clip.");
       }
+    });
+  }
+
+  function split() {
+    const start = clip.trim_start, end = clip.trim_end;
+    if (start == null || end == null) { setActionError("Add trim start/end before splitting."); return; }
+    const raw = prompt("Split at source video second:", ((start + end) / 2).toFixed(1));
+    if (raw == null) return;
+    const second = Number(raw);
+    setActionError(null);
+    startTransition(async () => {
+      try { await splitScene(projectId, clip.id, second); router.refresh(); }
+      catch (err) { setActionError(err instanceof Error ? err.message : "Split failed."); }
     });
   }
 
@@ -157,6 +172,11 @@ export function ClipRow({
         >
           ↓
         </button>
+        {!ranking && <button type="button" disabled={pending || clip.trim_start == null || clip.trim_end == null}
+          onClick={split}
+          className="rounded-md border border-black/15 px-2 py-1 text-xs disabled:opacity-30 dark:border-white/15">
+          Split
+        </button>}
         <button
           type="button"
           onClick={() => setEditing(true)}
