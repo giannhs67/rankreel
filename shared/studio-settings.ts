@@ -1,4 +1,7 @@
+import { VIDEO_LOOKS, type VideoLook } from "./video-looks";
+
 export type StudioRenderSettings = {
+  videoLook: VideoLook;
   captions: boolean;
   music: boolean;
   transitions: "cut" | "fade" | "zoom";
@@ -18,7 +21,12 @@ export function parseStudioSettings(value: unknown): StudioRenderSettings | null
       v.volume < 0 || v.volume > 100 ||
       typeof v.script !== "string" || v.script.length > 5000 ||
       !["deep", "energetic", "documentary"].includes(String(v.voice))) return null;
+  const videoLook = typeof v.videoLook === "string" &&
+    Object.prototype.hasOwnProperty.call(VIDEO_LOOKS, v.videoLook)
+    ? v.videoLook as VideoLook
+    : "original";
   return {
+    videoLook,
     captions: v.captions, music: v.music,
     transitions: v.transitions as StudioRenderSettings["transitions"],
     captionStyle: v.captionStyle as StudioRenderSettings["captionStyle"],
