@@ -115,12 +115,12 @@ export function StudioControls({ projectId, ranking = false }: { projectId: stri
             <option value="documentary">Documentary</option>
           </select>
         </label>
-        {<label className="space-y-1 text-sm">
+        <label className="space-y-1 text-sm">
           <span className="font-medium">Transitions</span>
           <select className={input} value={settings.transitions} onChange={e => change({ transitions: e.target.value as StudioSettings["transitions"] })}>
             <option value="cut">Quick cut</option><option value="fade">Fade</option><option value="zoom">Zoom</option>
           </select>
-        </label>}
+        </label>
       </div>
       <label className="block space-y-1 text-sm">
         <span className="font-medium">Voiceover script</span>
