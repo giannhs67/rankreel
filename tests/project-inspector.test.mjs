@@ -22,3 +22,8 @@ test("allows a clean project with recorded rights", () => {
   const issues = inspectProject({ clips: [clip("c", "Example", null)], licenses: { c: { status: "mine" } }, settings: { music: false } });
   assert.equal(issues.length, 0);
 });
+
+test("licensed footage needs a recorded source", () => {
+  const issues = inspectProject({ clips: [clip("d", "Licensed clip", 1)], licenses: { d: { status: "licensed", source: "" } } });
+  assert.ok(issues.some(issue => issue.id === "source-d"));
+});
