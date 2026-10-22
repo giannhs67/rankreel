@@ -52,7 +52,7 @@ export function SortableClipList({ projectId, clips }: { projectId: string; clip
             className={draggedId === clip.id ? "opacity-50" : ""}
           >
             <div className="mb-1 flex items-center justify-between gap-2 px-1 text-xs text-black/50 dark:text-white/50">
-              <span>☰ Position {index + 1} · Ranking #{clips.length - index}</span>
+              <span>☰ Playback {index + 1} · {clip.number == null ? "No rank set" : `Rank #${clip.number}`}</span>
               <label className="flex items-center gap-2">
                 <span className="sr-only">Move {clip.title} to position</span>
                 <select
