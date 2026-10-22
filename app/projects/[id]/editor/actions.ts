@@ -122,15 +122,15 @@ export async function saveQuickStyle(
   const format = project.format;
   let config: AnyTemplateConfig;
   if (format === "ranking_list") {
-    const base = resolveRankingConfig(stored);
+    const base = resolveRankingConfig(stored as Parameters<typeof resolveRankingConfig>[0]);
     config = { ...base, text: { ...base.text, fontSize: updates.fontSize,
       baseColor: updates.textColor, currentColor: updates.accentColor } };
   } else if (format === "title_banner") {
-    const base = resolveTitleBannerConfig(stored);
+    const base = resolveTitleBannerConfig(stored as Parameters<typeof resolveTitleBannerConfig>[0]);
     config = { ...base, text: { ...base.text, fontSize: updates.fontSize,
       color: updates.textColor, strokeColor: updates.accentColor } };
   } else if (format === "caption") {
-    const base = resolveCaptionConfig(stored);
+    const base = resolveCaptionConfig(stored as Parameters<typeof resolveCaptionConfig>[0]);
     config = { ...base, text: { ...base.text, fontSize: updates.fontSize,
       color: updates.textColor, backgroundColor: updates.accentColor } };
   } else {
