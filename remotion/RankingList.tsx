@@ -62,7 +62,6 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
     <AbsoluteFill style={{ backgroundColor: "black" }}>
       <BackgroundMusic settings={studioSettings} />
       <SoundEffects settings={studioSettings} />
-      <TimedCaptions settings={studioSettings} />
       {/* Top: blurred backdrop of the current clip + the ranking list */}
       <AbsoluteFill style={{ height: TOP_HEIGHT, overflow: "hidden" }}>
         <Series>
@@ -160,6 +159,7 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
           </div>
         </AbsoluteFill>
       )}
+      <TimedCaptions settings={studioSettings} />
     </AbsoluteFill>
   );
 }
