@@ -3,6 +3,9 @@ import { VIDEO_LOOKS, type VideoLook } from "./video-looks";
 
 export type StudioRenderSettings = {
   videoLook: VideoLook;
+  cropMode: "cover" | "contain";
+  cropZoom: number;
+  overlayText: string;
   lookIntensity: number;
   clipLooks: Record<string, { look: VideoLook; intensity: number }>;
   captions: boolean;
@@ -43,7 +46,12 @@ export function parseStudioSettings(value: unknown): StudioRenderSettings | null
       clipLooks[id] = { look: value.look as VideoLook, intensity: Math.max(0, Math.min(100, value.intensity)) };
     }
   }
+  const cropMode = v.cropMode === "contain" ? "contain" : "cover";
+  const cropZoom = typeof v.cropZoom === "number" && Number.isFinite(v.cropZoom)
+    ? Math.max(100, Math.min(200, v.cropZoom)) : 100;
+  const overlayText = typeof v.overlayText === "string" ? v.overlayText.slice(0, 160) : "";
   return {
+    cropMode, cropZoom, overlayText,
     videoLook, lookIntensity, clipLooks,
     captions: v.captions, music: v.music, musicTrack,
     transitions: v.transitions as StudioRenderSettings["transitions"],
