@@ -3,6 +3,7 @@ import type { StudioRenderSettings } from "@/shared/studio-settings";
 import { DEFAULT_RANKING_CONFIG, type RankingListConfig } from "./ranking-config";
 import { clipFramesFor, getClipStartFrames, getCurrentClipIndex, getTotalDurationInFrames } from "./clip-timing";
 import { entranceStyle } from "./entrance-style";
+import { trimStartFrame } from "../shared/trim-window.mjs";
 
 export type RankingClip = {
   id: string;
@@ -10,6 +11,7 @@ export type RankingClip = {
   number: number | null;
   videoUrl: string;
   durationInSeconds: number;
+  trimStartInSeconds: number;
 };
 
 export type RankingListProps = {
@@ -57,6 +59,7 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
           <AbsoluteFill>
             <Video
               src={current.videoUrl}
+              startFrom={trimStartFrame(current, fps)}
               muted
               style={{
                 width: "100%",
@@ -121,7 +124,7 @@ export function RankingList({ clips, config = DEFAULT_RANKING_CONFIG, studioSett
           {clips.map((clip) => (
             <Series.Sequence key={clip.id} durationInFrames={clipFramesFor(clip.durationInSeconds, fps)}>
               <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
-                <Video src={clip.videoUrl} style={{ maxWidth: "100%", maxHeight: "100%" }} />
+                <Video src={clip.videoUrl} startFrom={trimStartFrame(clip, fps)} style={{ maxWidth: "100%", maxHeight: "100%" }} />
               </AbsoluteFill>
             </Series.Sequence>
           ))}
