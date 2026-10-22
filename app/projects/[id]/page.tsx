@@ -8,6 +8,10 @@ import { RenderPanel } from "./render-panel";
 import { StudioControls } from "./studio-controls";
 import { CreatorTools } from "./creator-tools";
 import { FormatSwitcher } from "./format-switcher";
+import { QuickStyle } from "./quick-style";
+import { resolveRankingConfig } from "@/remotion/ranking-config";
+import { resolveTitleBannerConfig } from "@/remotion/title-banner-config";
+import { resolveCaptionConfig } from "@/remotion/caption-config";
 
 export default async function ProjectPage({
   params,
@@ -24,7 +28,7 @@ export default async function ProjectPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("id, name, format")
+    .select("id, name, format, template_id")
     .eq("id", id)
     .single();
 
@@ -38,6 +42,20 @@ export default async function ProjectPage({
 
   const usedRanks = new Set((clips ?? []).map(clip => clip.number).filter((number): number is number => number !== null));
   const nextRankingNumber = [6, 5, 4, 3, 2, 1].find(number => !usedRanks.has(number)) ?? 0;
+
+  const { data: savedStyle } = project.template_id
+    ? await supabase.from("templates").select("config_json").eq("id", project.template_id).single()
+    : { data: null };
+  const rawStyle = savedStyle?.config_json ?? null;
+  const quickStyle = project.format === "ranking_list"
+    ? (() => { const v = resolveRankingConfig(rawStyle); return {
+        textColor: v.text.baseColor, accentColor: v.text.currentColor, fontSize: v.text.fontSize }; })()
+    : project.format === "caption"
+      ? (() => { const v = resolveCaptionConfig(rawStyle); return {
+          textColor: v.text.color, accentColor: /^#[0-9a-fA-F]{6}$/.test(v.text.backgroundColor)
+            ? v.text.backgroundColor : "#000000", fontSize: v.text.fontSize }; })()
+      : (() => { const v = resolveTitleBannerConfig(rawStyle); return {
+          textColor: v.text.color, accentColor: v.text.strokeColor, fontSize: v.text.fontSize }; })();
 
   const { data: jobs } = await supabase
     .from("jobs")
@@ -99,6 +117,8 @@ export default async function ProjectPage({
           </section>
         )}
 
+        <QuickStyle projectId={project.id} format={project.format} initial={quickStyle} />
+
         <CreatorTools projectId={project.id} clips={clips ?? []} ranking={project.format === "ranking_list"} />
 
         <section>
@@ -123,7 +143,7 @@ export default async function ProjectPage({
               No clips yet — upload one above.
             </p>
           )}
-          <SortableClipList projectId={project.id} clips={clips ?? []} />
+          <SortableClipList projectId={project.id} clips={clips ?? []} ranking={project.format === "ranking_list"} />
         </section>
 
         {!!clips?.length && (
