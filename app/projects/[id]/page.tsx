@@ -7,6 +7,7 @@ import { SortableClipList } from "./sortable-clip-list";
 import { RenderPanel } from "./render-panel";
 import { StudioControls } from "./studio-controls";
 import { CreatorTools } from "./creator-tools";
+import { MediaLibrary } from "./media-library";
 import { FormatSwitcher } from "./format-switcher";
 import { QuickStyle } from "./quick-style";
 import { resolveRankingConfig } from "@/remotion/ranking-config";
@@ -126,6 +127,8 @@ export default async function ProjectPage({
         )}
 
         <QuickStyle projectId={project.id} format={project.format} initial={quickStyle} />
+
+        <MediaLibrary projectId={project.id} clips={clips ?? []} />
 
         <CreatorTools projectId={project.id} clips={clips ?? []} ranking={project.format === "ranking_list"} />
 
