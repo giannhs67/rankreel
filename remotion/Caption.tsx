@@ -63,7 +63,6 @@ export function Caption({ clips, config = DEFAULT_CAPTION_CONFIG, studioSettings
     <AbsoluteFill style={{ backgroundColor: "black" }}>
       <BackgroundMusic settings={studioSettings} />
       <SoundEffects settings={studioSettings} />
-      <TimedCaptions settings={studioSettings} />
       <AbsoluteFill style={{ opacity: fade, transform: `scale(${zoom})` }}>
       <Series>
         {clips.map((clip) => (
@@ -113,6 +112,7 @@ export function Caption({ clips, config = DEFAULT_CAPTION_CONFIG, studioSettings
           </div>
         </AbsoluteFill>
       )}
+      <TimedCaptions settings={studioSettings} />
     </AbsoluteFill>
   );
 }
