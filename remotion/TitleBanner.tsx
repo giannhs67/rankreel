@@ -58,7 +58,6 @@ export function TitleBanner({ clips, config = DEFAULT_TITLE_BANNER_CONFIG, studi
     <AbsoluteFill style={{ backgroundColor: "black" }}>
       <BackgroundMusic settings={studioSettings} />
       <SoundEffects settings={studioSettings} />
-      <TimedCaptions settings={studioSettings} />
       <AbsoluteFill style={{ opacity: fade, transform: `scale(${zoom})` }}>
       <Series>
         {clips.map((clip) => (
@@ -100,6 +99,7 @@ export function TitleBanner({ clips, config = DEFAULT_TITLE_BANNER_CONFIG, studi
           </div>
         </AbsoluteFill>
       )}
+      <TimedCaptions settings={studioSettings} />
     </AbsoluteFill>
   );
 }
