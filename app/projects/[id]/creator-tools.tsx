@@ -29,13 +29,16 @@ export function CreatorTools({ projectId, clips, ranking }: { projectId: string;
   const [note, setNote] = useState("");
 
   useEffect(() => {
-    const storedRights = safeJSON(localStorage.getItem(storageKey));
-    if (storedRights && typeof storedRights === "object" && !Array.isArray(storedRights)) setRights(storedRights as Record<string, Right>);
-    const storedSettings = safeJSON(localStorage.getItem("short-tube-studio-" + projectId));
-    if (storedSettings && typeof storedSettings === "object" && !Array.isArray(storedSettings)) setSettings(storedSettings as Record<string, unknown>);
-    const savedScripts = safeJSON(localStorage.getItem("short-tube-ab-" + projectId)) as { a?: string; b?: string } | null;
-    if (savedScripts && typeof savedScripts === "object") { setScriptA(savedScripts.a ?? ""); setScriptB(savedScripts.b ?? ""); }
-    setLoaded(true);
+    // Defer hydration state until the effect finishes to avoid cascading renders.
+    queueMicrotask(() => {
+      const storedRights = safeJSON(localStorage.getItem(storageKey));
+      if (storedRights && typeof storedRights === "object" && !Array.isArray(storedRights)) setRights(storedRights as Record<string, Right>);
+      const storedSettings = safeJSON(localStorage.getItem("short-tube-studio-" + projectId));
+      if (storedSettings && typeof storedSettings === "object" && !Array.isArray(storedSettings)) setSettings(storedSettings as Record<string, unknown>);
+      const savedScripts = safeJSON(localStorage.getItem("short-tube-ab-" + projectId)) as { a?: string; b?: string } | null;
+      if (savedScripts && typeof savedScripts === "object") { setScriptA(savedScripts.a ?? ""); setScriptB(savedScripts.b ?? ""); }
+      setLoaded(true);
+    });
   }, [projectId, storageKey]);
 
   useEffect(() => {
