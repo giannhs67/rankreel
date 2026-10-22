@@ -7,6 +7,7 @@ import { SortableClipList } from "./sortable-clip-list";
 import { RenderPanel } from "./render-panel";
 import { StudioControls } from "./studio-controls";
 import { CreatorTools } from "./creator-tools";
+import { FormatSwitcher } from "./format-switcher";
 
 export default async function ProjectPage({
   params,
@@ -72,6 +73,8 @@ export default async function ProjectPage({
             )}
           </div>
         </div>
+
+        <FormatSwitcher projectId={project.id} currentFormat={project.format} clipCount={clips?.length ?? 0} />
 
         {project.format === "ranking_list" ? (
           <section className="space-y-3 rounded-2xl border border-amber-400/30 bg-amber-400/5 p-4">
